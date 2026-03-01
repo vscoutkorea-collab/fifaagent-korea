@@ -1,0 +1,69 @@
+export type PageType =
+  | 'home'
+  | 'exam'
+  | 'exam-result'
+  | 'admin'
+  | 'pricing'
+  | 'study'
+  | 'register'
+  | 'payment'
+
+export interface Question {
+  id: string
+  text: string
+  options: string[]
+  correctAnswer: number | number[]   // 단수: number, 복수: number[]
+  category: string
+  explanation: string
+}
+
+export interface UserAnswer {
+  questionId: string
+  selectedAnswer: number | number[] | null   // 단수: number, 복수: number[]
+}
+
+export interface ExamResult {
+  answers: UserAnswer[]
+  questions: Question[]
+  score: number
+  passed: boolean
+  completedAt: string
+  timeSpent: number
+}
+
+export interface RegisteredUser {
+  id: string
+  firstName: string
+  lastName: string
+  phone: string
+  age: string
+  email: string
+  hasPaidExam: boolean
+  createdAt: string
+}
+
+export interface StudyPost {
+  id: string
+  author: string
+  title: string
+  content: string
+  category: 'tip' | 'resource' | 'experience' | 'question'
+  likes: number
+  createdAt: string
+  comments: StudyComment[]
+}
+
+export interface StudyComment {
+  id: string
+  author: string
+  content: string
+  createdAt: string
+}
+
+export interface StudyMaterial {
+  id: string
+  name: string
+  type: string
+  content: string
+  uploadedAt: string
+}
