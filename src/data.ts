@@ -302,8 +302,7 @@ const STORAGE_KEYS = {
 export function getQuestions(): Question[] {
   const stored = localStorage.getItem(STORAGE_KEYS.QUESTIONS)
   if (stored) return JSON.parse(stored)
-  localStorage.setItem(STORAGE_KEYS.QUESTIONS, JSON.stringify(SAMPLE_QUESTIONS))
-  return SAMPLE_QUESTIONS
+  return []
 }
 
 export function saveQuestions(questions: Question[]): void {
@@ -344,8 +343,7 @@ export function saveUsers(users: RegisteredUser[]): void {
 export function getStudyPosts(): StudyPost[] {
   const stored = localStorage.getItem(STORAGE_KEYS.STUDY_POSTS)
   if (stored) return JSON.parse(stored)
-  localStorage.setItem(STORAGE_KEYS.STUDY_POSTS, JSON.stringify(SAMPLE_STUDY_POSTS))
-  return SAMPLE_STUDY_POSTS
+  return []
 }
 
 export function saveStudyPosts(posts: StudyPost[]): void {
