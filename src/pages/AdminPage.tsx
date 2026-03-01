@@ -2,15 +2,15 @@ import { useState, useRef, useCallback } from 'react'
 import {
   Lock, Plus, Trash2, Upload, FileText, Users, AlertCircle, X,
   Download, Eye, Image, CheckCircle, Clock, Loader, ChevronDown,
-  ChevronUp, RotateCcw, FlaskConical
+  ChevronUp, RotateCcw, FlaskConical, MessageSquare, Pin, PinOff
 } from 'lucide-react'
-import type { Question, RegisteredUser, StudyMaterial } from '../types'
+import type { Question, RegisteredUser, StudyMaterial, StudyPost } from '../types'
 import type { PageType } from '../types'
-import { getQuestions, saveQuestions, getUsers, getStudyMaterials, saveStudyMaterials } from '../data'
+import { getQuestions, saveQuestions, getUsers, getStudyMaterials, saveStudyMaterials, getStudyPosts, saveStudyPosts } from '../data'
 
 const ADMIN_PASSWORD = 'fifaadmin2024'
 
-type AdminTab = 'questions' | 'text-input' | 'image-upload' | 'materials' | 'users'
+type AdminTab = 'questions' | 'text-input' | 'image-upload' | 'materials' | 'users' | 'community'
 
 /* ────────────────────────────────────────
    OCR 파싱 유틸리티
@@ -316,6 +316,7 @@ export default function AdminPage({ onAdminLogin, onAdminLogout, onNavigate }: A
     { id: 'text-input'  as AdminTab, label: '텍스트로 등록',   icon: <Plus size={15} /> },
     { id: 'image-upload'as AdminTab, label: '사진으로 등록',   icon: <Image size={15} /> },
     { id: 'materials'   as AdminTab, label: '학습자료',         icon: <Upload size={15} /> },
+    { id: 'community'   as AdminTab, label: '커뮤니티 관리',   icon: <MessageSquare size={15} /> },
     { id: 'users'       as AdminTab, label: '회원 관리',        icon: <Users size={15} /> },
   ]
 
@@ -363,6 +364,7 @@ export default function AdminPage({ onAdminLogin, onAdminLogout, onNavigate }: A
         {tab === 'text-input'   && <TextInputTab />}
         {tab === 'image-upload' && <ImageUploadTab />}
         {tab === 'materials'    && <MaterialsTab />}
+        {tab === 'community'    && <CommunityTab />}
         {tab === 'users'        && <UsersTab />}
       </div>
     </div>
@@ -2037,6 +2039,232 @@ function UsersTab() {
           ))}
         </div>
       </div>
+    </div>
+  )
+}
+
+/* ──────────────────────────────────────────
+   커뮤니티 관리 탭
+────────────────────────────────────────── */
+const CATEGORY_LABEL: Record<string, string> = {
+  tip: '시험 팁',
+  resource: '학습 자료',
+  experience: '합격 후기',
+  question: '질문/답변',
+  notice: '공지사항',
+}
+const CATEGORY_COLOR: Record<string, string> = {
+  tip: 'bg-blue-100 text-blue-700',
+  resource: 'bg-green-100 text-green-700',
+  experience: 'bg-yellow-100 text-yellow-700',
+  question: 'bg-purple-100 text-purple-700',
+  notice: 'bg-red-100 text-red-700',
+}
+
+function CommunityTab() {
+  const [posts, setPosts] = useState<StudyPost[]>(() => getStudyPosts())
+  const [selectedPost, setSelectedPost] = useState<StudyPost | null>(null)
+  const [showWriteForm, setShowWriteForm] = useState(false)
+  const [newPost, setNewPost] = useState({ title: '', content: '', category: 'notice' as StudyPost['category'] })
+  const [filterCat, setFilterCat] = useState<string>('all')
+
+  const save = (updated: StudyPost[]) => {
+    setPosts(updated)
+    saveStudyPosts(updated)
+  }
+
+  const handleDeletePost = (id: string) => {
+    if (!confirm('이 게시물을 삭제할까요?')) return
+    save(posts.filter((p) => p.id !== id))
+    if (selectedPost?.id === id) setSelectedPost(null)
+  }
+
+  const handleDeleteComment = (postId: string, commentId: string) => {
+    const updated = posts.map((p) =>
+      p.id === postId ? { ...p, comments: p.comments.filter((c) => c.id !== commentId) } : p
+    )
+    save(updated)
+    if (selectedPost?.id === postId) {
+      setSelectedPost({ ...selectedPost, comments: selectedPost.comments.filter((c) => c.id !== commentId) })
+    }
+  }
+
+  const handleTogglePin = (id: string) => {
+    const updated = posts.map((p) => p.id === id ? { ...p, pinned: !p.pinned } : p)
+    save(updated)
+    if (selectedPost?.id === id) setSelectedPost({ ...selectedPost, pinned: !selectedPost.pinned })
+  }
+
+  const handleWritePost = () => {
+    if (!newPost.title.trim() || !newPost.content.trim()) return
+    const post: StudyPost = {
+      id: `p_admin_${Date.now()}`,
+      author: '관리자',
+      title: newPost.title.trim(),
+      content: newPost.content.trim(),
+      category: newPost.category,
+      likes: 0,
+      createdAt: new Date().toISOString().split('T')[0],
+      comments: [],
+      pinned: newPost.category === 'notice',
+    }
+    save([post, ...posts])
+    setNewPost({ title: '', content: '', category: 'notice' })
+    setShowWriteForm(false)
+  }
+
+  const filtered = filterCat === 'all' ? posts : posts.filter((p) => p.category === filterCat)
+  const sorted   = [...filtered].sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0))
+
+  if (selectedPost) {
+    const post = posts.find((p) => p.id === selectedPost.id) ?? selectedPost
+    return (
+      <div className="p-6 max-w-3xl">
+        <button onClick={() => setSelectedPost(null)} className="flex items-center gap-2 text-gray-500 hover:text-gray-700 mb-6 text-sm">
+          ← 목록으로
+        </button>
+        <div className="bg-white rounded-2xl p-6 shadow-sm mb-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${CATEGORY_COLOR[post.category] ?? 'bg-gray-100 text-gray-600'}`}>
+                {CATEGORY_LABEL[post.category] ?? post.category}
+              </span>
+              {post.pinned && <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-medium flex items-center gap-1"><Pin size={10} /> 고정</span>}
+            </div>
+            <div className="flex items-center gap-2">
+              <button onClick={() => handleTogglePin(post.id)}
+                className={`flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg border transition-colors ${post.pinned ? 'border-red-200 text-red-600 hover:bg-red-50' : 'border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
+                {post.pinned ? <><PinOff size={12} /> 고정 해제</> : <><Pin size={12} /> 상단 고정</>}
+              </button>
+              <button onClick={() => handleDeletePost(post.id)}
+                className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 transition-colors">
+                <Trash2 size={12} /> 삭제
+              </button>
+            </div>
+          </div>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">{post.title}</h2>
+          <div className="text-xs text-gray-400 mb-4">{post.author} · {post.createdAt}</div>
+          <p className="text-gray-700 leading-relaxed whitespace-pre-line text-sm">{post.content}</p>
+        </div>
+
+        <div className="bg-white rounded-2xl p-6 shadow-sm">
+          <h3 className="font-bold text-gray-900 mb-4">댓글 {post.comments.length}개</h3>
+          {post.comments.length === 0 && <p className="text-gray-400 text-sm text-center py-4">댓글이 없습니다.</p>}
+          <div className="space-y-3">
+            {post.comments.map((c) => (
+              <div key={c.id} className="bg-gray-50 rounded-xl p-4 flex items-start justify-between gap-3">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-semibold text-sm text-gray-900">{c.author}</span>
+                    <span className="text-xs text-gray-400">{c.createdAt}</span>
+                  </div>
+                  <p className="text-gray-700 text-sm">{c.content}</p>
+                </div>
+                <button onClick={() => handleDeleteComment(post.id, c.id)}
+                  className="flex-shrink-0 p-1.5 rounded-lg hover:bg-red-50 text-red-400 hover:text-red-600 transition-colors">
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="p-6">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-lg font-bold text-gray-900">커뮤니티 관리</h2>
+          <p className="text-sm text-gray-500 mt-0.5">게시물 삭제, 상단 고정, 공지사항 작성</p>
+        </div>
+        <button onClick={() => setShowWriteForm(true)}
+          className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-medium transition-colors">
+          <Plus size={15} /> 공지 작성
+        </button>
+      </div>
+
+      <div className="flex gap-2 mb-4 flex-wrap">
+        {[{ id: 'all', label: '전체' }, ...Object.entries(CATEGORY_LABEL).map(([k, v]) => ({ id: k, label: v }))].map((tab) => (
+          <button key={tab.id} onClick={() => setFilterCat(tab.id)}
+            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${filterCat === tab.id ? 'bg-blue-600 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+        {sorted.length === 0 && <div className="py-16 text-center text-gray-400 text-sm">게시물이 없습니다.</div>}
+        {sorted.map((post, i) => (
+          <div key={post.id} className={`flex items-center gap-4 px-5 py-4 hover:bg-gray-50 transition-colors ${i < sorted.length - 1 ? 'border-b border-gray-100' : ''}`}>
+            <button onClick={() => setSelectedPost(post)} className="flex-1 text-left min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                {post.pinned && <Pin size={12} className="text-red-500 flex-shrink-0" />}
+                <span className={`text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${CATEGORY_COLOR[post.category] ?? 'bg-gray-100 text-gray-600'}`}>
+                  {CATEGORY_LABEL[post.category] ?? post.category}
+                </span>
+                <span className="font-medium text-gray-900 text-sm truncate">{post.title}</span>
+              </div>
+              <div className="flex items-center gap-3 text-xs text-gray-400">
+                <span>{post.author}</span>
+                <span>{post.createdAt}</span>
+                <span className="flex items-center gap-1"><MessageSquare size={10} /> {post.comments.length}</span>
+              </div>
+            </button>
+            <div className="flex items-center gap-1 flex-shrink-0">
+              <button onClick={() => handleTogglePin(post.id)}
+                className={`p-1.5 rounded-lg transition-colors ${post.pinned ? 'text-red-500 hover:bg-red-50' : 'text-gray-400 hover:bg-gray-100'}`}
+                title={post.pinned ? '고정 해제' : '상단 고정'}>
+                {post.pinned ? <PinOff size={15} /> : <Pin size={15} />}
+              </button>
+              <button onClick={() => handleDeletePost(post.id)}
+                className="p-1.5 rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors">
+                <Trash2 size={15} />
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {showWriteForm && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-2xl p-6 shadow-xl">
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-lg font-bold text-gray-900">공지사항 / 게시물 작성</h3>
+              <button onClick={() => setShowWriteForm(false)} className="p-1 rounded-full hover:bg-gray-100"><X size={20} /></button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">카테고리</label>
+                <select value={newPost.category}
+                  onChange={(e) => setNewPost({ ...newPost, category: e.target.value as StudyPost['category'] })}
+                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  {Object.entries(CATEGORY_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">제목</label>
+                <input value={newPost.title} onChange={(e) => setNewPost({ ...newPost, title: e.target.value })}
+                  placeholder="제목을 입력하세요"
+                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">내용</label>
+                <textarea value={newPost.content} onChange={(e) => setNewPost({ ...newPost, content: e.target.value })}
+                  placeholder="내용을 입력하세요" rows={8}
+                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
+              </div>
+              <div className="flex gap-3 justify-end">
+                <button onClick={() => setShowWriteForm(false)}
+                  className="px-5 py-2.5 border border-gray-200 rounded-xl text-gray-700 font-medium hover:bg-gray-50">취소</button>
+                <button onClick={handleWritePost}
+                  className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium transition-colors">게시하기</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

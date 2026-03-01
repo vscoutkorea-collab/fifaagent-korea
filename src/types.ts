@@ -47,10 +47,11 @@ export interface StudyPost {
   author: string
   title: string
   content: string
-  category: 'tip' | 'resource' | 'experience' | 'question'
+  category: 'tip' | 'resource' | 'experience' | 'question' | 'notice'
   likes: number
   createdAt: string
   comments: StudyComment[]
+  pinned?: boolean
 }
 
 export interface StudyComment {

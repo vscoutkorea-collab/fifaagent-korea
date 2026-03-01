@@ -54,7 +54,7 @@ export default function App() {
       case 'pricing':
         return <PricingPage onNavigate={handleNavigate} currentUser={currentUser} />
       case 'study':
-        return <StudyPage currentUser={currentUser} />
+        return <StudyPage currentUser={currentUser} isAdmin={isAdmin} />
       case 'register':
         return <RegisterPage onNavigate={handleNavigate} onLogin={handleLogin} />
       case 'admin':
