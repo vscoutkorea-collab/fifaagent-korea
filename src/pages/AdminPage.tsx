@@ -1686,13 +1686,33 @@ function QuestionsTab() {
   const [editingQuestion, setEditingQuestion] = useState<Question | null>(null)
   const [editForm, setEditForm] = useState({ text: '', options: ['','','',''], correctAnswers: [] as number[], category: '', explanation: '' })
   const [searchText, setSearchText] = useState('')
+  const [dateFilter, setDateFilter] = useState<string>('all')
 
-  const filtered = searchText
-    ? questions.filter(
-        (q) => q.text.toLowerCase().includes(searchText.toLowerCase()) ||
-               q.category.toLowerCase().includes(searchText.toLowerCase())
-      )
-    : questions
+  // 중복 문제 감지 (텍스트 앞 30자 기준)
+  const dupSet = new Set<string>()
+  const dupIds = new Set<string>()
+  for (const q of questions) {
+    const key = q.text.trim().toLowerCase().slice(0, 40)
+    if (dupSet.has(key)) dupIds.add(q.id)
+    else dupSet.add(key)
+  }
+  // 기존 id도 중복으로 표시
+  for (const q of questions) {
+    const key = q.text.trim().toLowerCase().slice(0, 40)
+    if ([...questions].filter((x) => x.text.trim().toLowerCase().slice(0, 40) === key).length > 1) dupIds.add(q.id)
+  }
+
+  // 날짜 목록 추출
+  const dateOptions = Array.from(
+    new Set(questions.map((q) => q.createdAt ? q.createdAt.slice(0, 10) : '날짜 없음'))
+  ).sort().reverse()
+
+  const filtered = questions.filter((q) => {
+    const matchText = !searchText || q.text.toLowerCase().includes(searchText.toLowerCase()) || q.category.toLowerCase().includes(searchText.toLowerCase())
+    const qDate = q.createdAt ? q.createdAt.slice(0, 10) : '날짜 없음'
+    const matchDate = dateFilter === 'all' || qDate === dateFilter || (dateFilter === 'dup' && dupIds.has(q.id))
+    return matchText && matchDate
+  })
 
   const handleAddQuestion = () => {
     setFormError('')
@@ -1717,6 +1737,7 @@ function QuestionsTab() {
       correctAnswer,
       category: form.category.trim(),
       explanation: form.explanation.trim(),
+      createdAt: new Date().toISOString(),
     }
     const updated = [...questions, newQ]
     setQuestions(updated)
@@ -1806,8 +1827,8 @@ function QuestionsTab() {
 
   return (
     <div>
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col gap-3 mb-4">
+        <div className="flex flex-wrap items-center gap-3">
           <p className="text-gray-500 text-sm">총 <strong className="text-gray-900">{questions.length}</strong>개</p>
           <input
             value={searchText}
@@ -1815,7 +1836,23 @@ function QuestionsTab() {
             placeholder="문제 검색..."
             className="border border-gray-200 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-48"
           />
+          <select value={dateFilter} onChange={(e) => setDateFilter(e.target.value)}
+            className="border border-gray-200 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+            <option value="all">전체 날짜</option>
+            {dupIds.size > 0 && <option value="dup">⚠ 중복 문제만 ({dupIds.size}개)</option>}
+            {dateOptions.map((d) => (
+              <option key={d} value={d}>{d === '날짜 없음' ? '날짜 없음' : new Date(d + 'T00:00:00').toLocaleDateString('ko-KR', { year:'numeric', month:'long', day:'numeric' })}</option>
+            ))}
+          </select>
         </div>
+        {dupIds.size > 0 && (
+          <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2 text-sm text-amber-800">
+            <AlertCircle size={14} className="flex-shrink-0" />
+            <span>중복 의심 문제 <strong>{dupIds.size}개</strong> 감지 — 위 필터에서 "중복 문제만" 선택하여 확인하세요</span>
+          </div>
+        )}
+      </div>
+      <div className="flex justify-between items-center mb-4">
         <div className="flex gap-2">
           <button onClick={() => setShowBulkUpload(true)}
             className="flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-xl text-sm text-gray-700 hover:bg-gray-50">
@@ -1835,20 +1872,27 @@ function QuestionsTab() {
           </div>
         )}
         {filtered.map((q, i) => (
-          <div key={q.id} className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+          <div key={q.id} className={`bg-white rounded-xl p-5 shadow-sm border hover:shadow-md transition-shadow ${dupIds.has(q.id) ? 'border-amber-300' : 'border-gray-100'}`}>
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1">
-                <div className="flex items-center gap-2 mb-2">
+                <div className="flex items-center gap-2 mb-2 flex-wrap">
                   <span className="text-xs font-bold text-gray-400">Q{i + 1}</span>
                   <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full">{q.category}</span>
+                  {dupIds.has(q.id) && <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">⚠ 중복</span>}
+                  {q.createdAt && <span className="text-xs text-gray-400">{new Date(q.createdAt).toLocaleDateString('ko-KR')}</span>}
                 </div>
                 <p className="text-gray-900 text-sm font-medium leading-relaxed">{q.text}</p>
                 <div className="mt-2 space-y-0.5">
-                  {q.options.map((opt, j) => (
-                    <p key={j} className={`text-xs ${j === q.correctAnswer ? 'text-green-700 font-semibold' : 'text-gray-500'}`}>
-                      {j === q.correctAnswer ? '✓ ' : ''}{String.fromCharCode(65 + j)}. {opt}
-                    </p>
-                  ))}
+                  {q.options.map((opt, j) => {
+                    const isCorrect = Array.isArray(q.correctAnswer)
+                      ? (q.correctAnswer as number[]).includes(j)
+                      : (q.correctAnswer as number) === j
+                    return (
+                      <p key={j} className={`text-xs ${isCorrect ? 'text-green-700 font-semibold' : 'text-gray-500'}`}>
+                        {isCorrect ? '✓ ' : ''}{String.fromCharCode(65 + j)}. {opt}
+                      </p>
+                    )
+                  })}
                 </div>
               </div>
               <div className="flex gap-1">

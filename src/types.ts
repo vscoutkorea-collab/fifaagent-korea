@@ -13,9 +13,10 @@ export interface Question {
   id: string
   text: string
   options: string[]
-  correctAnswer: number | number[]   // 단수: number, 복수: number[]
+  correctAnswer: number | number[]
   category: string
   explanation: string
+  createdAt?: string
 }
 
 export interface UserAnswer {
