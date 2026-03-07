@@ -1,7 +1,7 @@
 import { useState, Suspense, lazy } from 'react'
 import type { PageType, ExamResult } from './types'
 import Navbar from './components/Navbar'
-import { getCurrentUser, setCurrentUser } from './data'
+import { getCurrentUser, setCurrentUser, getPaymentRequests, getUsers, saveUsers } from './data'
 import type { RegisteredUser } from './types'
 
 const HomePage       = lazy(() => import('./pages/HomePage'))
@@ -41,8 +41,25 @@ export default function App() {
 
   const handleNavigate = (target: PageType) => {
     window.scrollTo({ top: 0, behavior: 'instant' })
-    const freshUser = getCurrentUser()
-    if (freshUser) setCurrentUserState(freshUser)
+    const fresh = getCurrentUser()
+    if (fresh) {
+      // 결제 승인됐는데 hasPaidExam이 false인 경우 자동 동기화
+      if (!fresh.hasPaidExam) {
+        const reqs = getPaymentRequests()
+        const approved = reqs.find(
+          (r) => r.status === 'approved' && (r.phone === fresh.phone || r.userId === fresh.id)
+        )
+        if (approved) {
+          const updated = { ...fresh, hasPaidExam: true, paidPlan: approved.plan, paidAt: approved.createdAt }
+          saveUsers(getUsers().map((u) => u.id === fresh.id ? updated : u))
+          setCurrentUser(updated)
+          setCurrentUserState(updated)
+          setPage(target)
+          return
+        }
+      }
+      setCurrentUserState(fresh)
+    }
     setPage(target)
   }
 

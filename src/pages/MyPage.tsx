@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { CheckCircle, Clock, XCircle, User, CreditCard, Building2, Trophy, ChevronRight } from 'lucide-react'
 import type { PageType, RegisteredUser } from '../types'
-import { getPaymentRequests, getPaymentSettings, getCurrentUser } from '../data'
+import { getPaymentRequests, getPaymentSettings, getCurrentUser, getUsers, saveUsers, setCurrentUser } from '../data'
 
 interface MyPageProps {
   onNavigate: (page: PageType) => void
@@ -17,10 +17,27 @@ function formatAmount(n: number) {
 }
 
 export default function MyPage({ onNavigate, currentUser, onLogout, onUserRefresh }: MyPageProps) {
-  // 마운트마다 localStorage에서 최신 유저 동기화 (관리자 승인 반영)
   useEffect(() => {
     const fresh = getCurrentUser()
-    if (fresh) onUserRefresh(fresh)
+    if (!fresh) return
+
+    // 결제 승인됐는데 hasPaidExam이 false인 경우 자동 동기화
+    if (!fresh.hasPaidExam) {
+      const reqs = getPaymentRequests()
+      const approved = reqs.find(
+        (r) => r.status === 'approved' && (r.phone === fresh.phone || r.userId === fresh.id)
+      )
+      if (approved) {
+        const updated = { ...fresh, hasPaidExam: true, paidPlan: approved.plan, paidAt: approved.createdAt }
+        const allUsers = getUsers()
+        saveUsers(allUsers.map((u) => u.id === fresh.id ? updated : u))
+        setCurrentUser(updated)
+        onUserRefresh(updated)
+        return
+      }
+    }
+
+    onUserRefresh(fresh)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!currentUser) {
