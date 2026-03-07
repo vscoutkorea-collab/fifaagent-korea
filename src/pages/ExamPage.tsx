@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { BookOpen, Languages, Clock, AlertCircle, ChevronLeft, ChevronRight, X, Send, FileText } from 'lucide-react'
+import { BookOpen, Languages, Clock, AlertCircle, ChevronLeft, ChevronRight, X, Send, FileText, ShieldCheck, RotateCcw, Eye } from 'lucide-react'
 import type { ExamResult, UserAnswer, PageType } from '../types'
-import { getRandomExamQuestions, getStudyMaterials } from '../data'
+import { getRandomExamQuestions, getStudyMaterials, getQuestions } from '../data'
 import type { Question, StudyMaterial } from '../types'
 
 interface ExamPageProps {
@@ -28,28 +28,126 @@ function isCorrect(q: Question, ans: UserAnswer): boolean {
   return sel.every((v, i) => v === corr[i])
 }
 
-export default function ExamPage({ onComplete, onNavigate }: ExamPageProps) {
-  const [questions] = useState<Question[]>(() => getRandomExamQuestions(20))
-  const [currentIndex, setCurrentIndex] = useState(0)
-  const [answers, setAnswers] = useState<UserAnswer[]>(() =>
-    Array.from({ length: 20 }, () => ({ questionId: '', selectedAnswer: null }))
+/* ─── 인트로 화면 ─── */
+function ExamIntro({ totalQuestions, onStart, onNavigate }: { totalQuestions: number; onStart: () => void; onNavigate: (p: PageType) => void }) {
+  if (totalQuestions === 0) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+        <div className="bg-white rounded-2xl p-8 max-w-sm w-full text-center shadow-sm">
+          <AlertCircle size={40} className="text-amber-500 mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-gray-900 mb-2">등록된 문제가 없습니다</h2>
+          <p className="text-gray-500 text-sm mb-6">관리자가 아직 문제를 등록하지 않았습니다.<br />잠시 후 다시 시도해 주세요.</p>
+          <button onClick={() => onNavigate('home')}
+            className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-colors">
+            홈으로 돌아가기
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-blue-800 to-blue-700 flex items-center justify-center px-4 py-12">
+      <div className="max-w-lg w-full">
+        {/* 헤더 */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-white/10 rounded-2xl mb-4">
+            <FileText size={32} className="text-white" />
+          </div>
+          <h1 className="text-3xl font-bold text-white mb-2">FIFA 에이전트 모의고사</h1>
+          <p className="text-blue-200">시험을 시작하기 전 아래 내용을 확인해 주세요</p>
+        </div>
+
+        {/* 시험 정보 카드 */}
+        <div className="bg-white rounded-2xl p-6 shadow-lg mb-4">
+          <h2 className="font-bold text-gray-900 mb-4 text-lg">시험 안내</h2>
+          <div className="grid grid-cols-2 gap-4 mb-5">
+            {[
+              { icon: <FileText size={20} className="text-blue-600" />, label: '총 문항', value: '20문제', bg: 'bg-blue-50' },
+              { icon: <Clock size={20} className="text-green-600" />, label: '제한 시간', value: '60분', bg: 'bg-green-50' },
+              { icon: <ShieldCheck size={20} className="text-purple-600" />, label: '합격 기준', value: '75점 이상', bg: 'bg-purple-50' },
+              { icon: <RotateCcw size={20} className="text-orange-500" />, label: '문제 방식', value: '랜덤 출제', bg: 'bg-orange-50' },
+            ].map((item) => (
+              <div key={item.label} className={`${item.bg} rounded-xl p-4 flex items-center gap-3`}>
+                {item.icon}
+                <div>
+                  <p className="text-xs text-gray-500">{item.label}</p>
+                  <p className="font-bold text-gray-900">{item.value}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="border-t border-gray-100 pt-4 space-y-2">
+            {[
+              '문제 풀이 중 오픈북 자료 및 DeepL 번역기를 이용할 수 있습니다.',
+              '시간이 종료되면 자동으로 제출됩니다.',
+              '단수/복수 정답 유형이 혼합되어 출제됩니다.',
+              '제출 후 즉시 채점 결과를 확인할 수 있습니다.',
+            ].map((txt) => (
+              <div key={txt} className="flex items-start gap-2 text-sm text-gray-600">
+                <span className="text-blue-400 mt-0.5 flex-shrink-0">•</span>
+                <span>{txt}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* 오픈북 안내 */}
+        <div className="bg-white/10 border border-white/20 rounded-xl p-4 mb-6 flex items-center gap-3">
+          <Eye size={18} className="text-blue-200 flex-shrink-0" />
+          <p className="text-blue-100 text-sm">오픈북 허용 시험입니다. 시험 중 학습자료와 번역기를 자유롭게 이용하세요.</p>
+        </div>
+
+        <div className="flex gap-3">
+          <button onClick={() => onNavigate('home')}
+            className="flex-1 py-4 bg-white/10 hover:bg-white/20 text-white rounded-xl font-semibold transition-colors border border-white/20">
+            홈으로
+          </button>
+          <button onClick={onStart}
+            className="flex-[2] py-4 bg-white hover:bg-blue-50 text-blue-700 rounded-xl font-bold text-lg transition-colors shadow-lg">
+            모의고사 시작하기 →
+          </button>
+        </div>
+
+        <p className="text-center text-blue-300 text-xs mt-4">전체 {totalQuestions}개 문제 중 20개가 랜덤으로 출제됩니다.</p>
+      </div>
+    </div>
   )
+}
+
+export default function ExamPage({ onComplete, onNavigate }: ExamPageProps) {
+  const [started, setStarted] = useState(false)
+  const totalQuestions = getQuestions().length
+  const [questions, setQuestions] = useState<Question[]>([])
+  const [currentIndex, setCurrentIndex] = useState(0)
+  const [answers, setAnswers] = useState<UserAnswer[]>([])
   const [timeLeft, setTimeLeft] = useState(EXAM_DURATION)
   const [showOpenBook, setShowOpenBook] = useState(false)
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false)
   const [materials] = useState<StudyMaterial[]>(getStudyMaterials)
   const [selectedMaterial, setSelectedMaterial] = useState<StudyMaterial | null>(null)
-  const [startTime] = useState(Date.now())
+  const startTimeRef = useRef(Date.now())
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
-  useEffect(() => {
-    const initialAnswers = questions.map((q) => ({ questionId: q.id, selectedAnswer: null }))
-    setAnswers(initialAnswers)
-  }, [questions])
+  const handleStart = () => {
+    const qs = getRandomExamQuestions(20)
+    setQuestions(qs)
+    setAnswers(qs.map((q) => ({ questionId: q.id, selectedAnswer: null })))
+    setTimeLeft(EXAM_DURATION)
+    setCurrentIndex(0)
+    startTimeRef.current = Date.now()
+    setStarted(true)
+  }
+
+  // 인트로 화면
+  if (!started) {
+    return <ExamIntro totalQuestions={totalQuestions} onStart={handleStart} onNavigate={onNavigate} />
+  }
 
   const handleSubmit = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current)
-    const timeSpent = Math.floor((Date.now() - startTime) / 1000)
+    const timeSpent = Math.floor((Date.now() - startTimeRef.current) / 1000)
     const score = answers.reduce((acc, ans, i) => {
       const q = questions[i]
       return q && isCorrect(q, ans) ? acc + 1 : acc
@@ -63,7 +161,7 @@ export default function ExamPage({ onComplete, onNavigate }: ExamPageProps) {
       timeSpent,
     }
     onComplete(result)
-  }, [answers, questions, startTime, onComplete])
+  }, [answers, questions, onComplete])
 
   useEffect(() => {
     timerRef.current = setInterval(() => {
@@ -107,19 +205,7 @@ export default function ExamPage({ onComplete, onNavigate }: ExamPageProps) {
   const answeredCount = answers.filter((a) => a.selectedAnswer !== null && normalizeAnswer(a.selectedAnswer).length > 0).length
   const isWarning = timeLeft <= 300
 
-  if (!currentQ) return (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center px-4">
-      <div className="bg-white rounded-2xl p-8 max-w-sm w-full text-center">
-        <AlertCircle size={40} className="text-amber-500 mx-auto mb-4" />
-        <h2 className="text-xl font-bold text-gray-900 mb-2">등록된 문제가 없습니다</h2>
-        <p className="text-gray-500 text-sm mb-6">관리자가 아직 문제를 등록하지 않았습니다.<br />잠시 후 다시 시도해 주세요.</p>
-        <button onClick={() => onNavigate('home')}
-          className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-colors">
-          홈으로 돌아가기
-        </button>
-      </div>
-    </div>
-  )
+  if (!currentQ) return null
 
   return (
     <div className="min-h-screen bg-gray-900 flex flex-col">
