@@ -15,14 +15,15 @@ export default function Navbar({ currentPage, onNavigate, currentUser, onLogout,
   const [mobileOpen, setMobileOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
 
+  const canAccessExam = currentUser?.hasPaidExam || isAdmin
+
   const navItems: { label: string; page: PageType }[] = [
     { label: '홈', page: 'home' },
     { label: '요금안내', page: 'pricing' },
     { label: '커뮤니티', page: 'study' },
     { label: '관리자', page: 'admin' },
+    ...(canAccessExam ? [{ label: '모의고사', page: 'exam' as PageType }] : []),
   ]
-
-  const canAccessExam = currentUser?.hasPaidExam || isAdmin
 
   return (
     <nav className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">

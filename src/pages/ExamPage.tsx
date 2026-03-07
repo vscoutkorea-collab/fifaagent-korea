@@ -118,10 +118,32 @@ function ExamIntro({ totalQuestions, onStart, onNavigate }: { totalQuestions: nu
 
 export default function ExamPage({ onComplete, onNavigate }: ExamPageProps) {
   const [started, setStarted] = useState(false)
+  const [examQuestions, setExamQuestions] = useState<Question[]>([])
   const totalQuestions = getQuestions().length
-  const [questions, setQuestions] = useState<Question[]>([])
+
+  const handleStart = () => {
+    const qs = getRandomExamQuestions(20)
+    setExamQuestions(qs)
+    setStarted(true)
+  }
+
+  if (!started) {
+    return <ExamIntro totalQuestions={totalQuestions} onStart={handleStart} onNavigate={onNavigate} />
+  }
+
+  return <ExamRunner questions={examQuestions} onComplete={onComplete} onNavigate={onNavigate} />
+}
+
+/* ─── 실제 시험 실행 컴포넌트 (마운트 시 타이머 시작) ─── */
+function ExamRunner({ questions, onComplete, onNavigate }: {
+  questions: Question[]
+  onComplete: (result: ExamResult) => void
+  onNavigate: (page: PageType) => void
+}) {
   const [currentIndex, setCurrentIndex] = useState(0)
-  const [answers, setAnswers] = useState<UserAnswer[]>([])
+  const [answers, setAnswers] = useState<UserAnswer[]>(() =>
+    questions.map((q) => ({ questionId: q.id, selectedAnswer: null }))
+  )
   const [timeLeft, setTimeLeft] = useState(EXAM_DURATION)
   const [showOpenBook, setShowOpenBook] = useState(false)
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false)
@@ -129,39 +151,18 @@ export default function ExamPage({ onComplete, onNavigate }: ExamPageProps) {
   const [selectedMaterial, setSelectedMaterial] = useState<StudyMaterial | null>(null)
   const startTimeRef = useRef(Date.now())
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
-
-  const handleStart = () => {
-    const qs = getRandomExamQuestions(20)
-    setQuestions(qs)
-    setAnswers(qs.map((q) => ({ questionId: q.id, selectedAnswer: null })))
-    setTimeLeft(EXAM_DURATION)
-    setCurrentIndex(0)
-    startTimeRef.current = Date.now()
-    setStarted(true)
-  }
-
-  // 인트로 화면
-  if (!started) {
-    return <ExamIntro totalQuestions={totalQuestions} onStart={handleStart} onNavigate={onNavigate} />
-  }
+  const answersRef = useRef(answers)
+  answersRef.current = answers
 
   const handleSubmit = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current)
     const timeSpent = Math.floor((Date.now() - startTimeRef.current) / 1000)
-    const score = answers.reduce((acc, ans, i) => {
+    const score = answersRef.current.reduce((acc, ans, i) => {
       const q = questions[i]
       return q && isCorrect(q, ans) ? acc + 1 : acc
     }, 0)
-    const result: ExamResult = {
-      answers,
-      questions,
-      score,
-      passed: score >= 15,
-      completedAt: new Date().toISOString(),
-      timeSpent,
-    }
-    onComplete(result)
-  }, [answers, questions, onComplete])
+    onComplete({ answers: answersRef.current, questions, score, passed: score >= 15, completedAt: new Date().toISOString(), timeSpent })
+  }, [questions, onComplete])
 
   useEffect(() => {
     timerRef.current = setInterval(() => {
@@ -171,7 +172,7 @@ export default function ExamPage({ onComplete, onNavigate }: ExamPageProps) {
       })
     }, 1000)
     return () => { if (timerRef.current) clearInterval(timerRef.current) }
-  }, [handleSubmit])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const formatTime = (secs: number) => {
     const m = Math.floor(secs / 60).toString().padStart(2, '0')
