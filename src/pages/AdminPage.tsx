@@ -8,7 +8,7 @@ import {
 import type { Question, RegisteredUser, StudyMaterial, StudyPost, PaymentRequest, PaymentSettings } from '../types'
 import type { PageType } from '../types'
 import {
-  getQuestions, saveQuestions, getUsers, saveUsers, getStudyMaterials, saveStudyMaterials,
+  getQuestions, saveQuestions, getUsers, saveUsers, getCurrentUser, setCurrentUser, getStudyMaterials, saveStudyMaterials,
   getStudyPosts, saveStudyPosts, getPaymentRequests, savePaymentRequests,
   getPaymentSettings, savePaymentSettings
 } from '../data'
@@ -2351,9 +2351,12 @@ function PaymentsTab() {
     save(requests.map((r) => r.id === req.id ? { ...r, status: 'approved' as const } : r))
     const users = getUsers()
     const user = users.find((u) => u.phone === req.phone || u.id === req.userId)
-    if (user) localStorage.setItem('fifa_users', JSON.stringify(users.map((u) =>
-      u.id === user.id ? { ...u, hasPaidExam: true, paidPlan: req.plan, paidAt: new Date().toISOString() } : u
-    )))
+    if (user) {
+      const updatedUser = { ...user, hasPaidExam: true, paidPlan: req.plan, paidAt: new Date().toISOString() }
+      saveUsers(users.map((u) => u.id === user.id ? updatedUser : u))
+      const current = getCurrentUser()
+      if (current && current.id === user.id) setCurrentUser(updatedUser)
+    }
   }
   const handleReject = (id: string) => save(requests.map((r) => r.id === id ? { ...r, status: 'rejected' as const } : r))
   const handleDelete = (id: string) => { if (!confirm('삭제할까요?')) return; save(requests.filter((r) => r.id !== id)) }

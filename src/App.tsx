@@ -60,7 +60,7 @@ export default function App() {
       case 'payment':
         return <PaymentPage onNavigate={handleNavigate} currentUser={currentUser} />
       case 'mypage':
-        return <MyPage onNavigate={handleNavigate} currentUser={currentUser} onLogout={handleLogout} />
+        return <MyPage onNavigate={handleNavigate} currentUser={currentUser} onLogout={handleLogout} onUserRefresh={setCurrentUserState} />
       case 'study':
         return <StudyPage currentUser={currentUser} isAdmin={isAdmin} />
       case 'register':
