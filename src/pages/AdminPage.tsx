@@ -1704,24 +1704,51 @@ function QuestionsTab() {
   const [searchText, setSearchText] = useState('')
   const [dateFilter, setDateFilter] = useState<string>('all')
 
-  // 중복 문제 감지: key → [id, ...] 그룹핑
+  // ── 중복 감지 기준 1: 문제 텍스트 앞 100자 일치 ──
   const dupGroupMap = new Map<string, string[]>()
   for (const q of questions) {
-    const key = q.text.trim().toLowerCase().slice(0, 40)
+    const key = q.text.trim().toLowerCase().slice(0, 100)
     if (!dupGroupMap.has(key)) dupGroupMap.set(key, [])
     dupGroupMap.get(key)!.push(q.id)
   }
-  // 같은 key를 가진 id들 → 중복 대상 목록 저장 (자신 제외)
-  const dupIds = new Set<string>()
-  const dupSiblings = new Map<string, string[]>() // id → 함께 중복인 다른 id들
-  for (const [, ids] of dupGroupMap) {
-    if (ids.length > 1) {
-      ids.forEach((id) => {
-        dupIds.add(id)
-        dupSiblings.set(id, ids.filter((x) => x !== id))
-      })
+
+  // ── 중복 감지 기준 2: 보기(options) 3개 이상 동일 ──
+  // 보기를 정렬·정규화한 문자열로 비교
+  const optGroupMap = new Map<string, string[]>()
+  for (const q of questions) {
+    if (q.options.length >= 3) {
+      const optKey = q.options
+        .map((o) => o.trim().toLowerCase())
+        .sort()
+        .join('||')
+      if (!optGroupMap.has(optKey)) optGroupMap.set(optKey, [])
+      optGroupMap.get(optKey)!.push(q.id)
     }
   }
+
+  // 두 기준 모두에서 중복인 경우만 최종 중복으로 판정 (오탐 최소화)
+  const dupByText = new Set<string>()
+  const dupByOpt  = new Set<string>()
+  for (const [, ids] of dupGroupMap) { if (ids.length > 1) ids.forEach((id) => dupByText.add(id)) }
+  for (const [, ids] of optGroupMap)  { if (ids.length > 1) ids.forEach((id) => dupByOpt.add(id)) }
+
+  const dupIds = new Set<string>([...dupByText, ...dupByOpt])
+
+  // id → {siblings, reason} 맵
+  interface DupInfo { siblings: string[]; reasons: string[] }
+  const dupSiblings = new Map<string, DupInfo>()
+
+  const addSibling = (ids: string[], reason: string) => {
+    ids.forEach((id) => {
+      if (!dupSiblings.has(id)) dupSiblings.set(id, { siblings: [], reasons: [] })
+      const info = dupSiblings.get(id)!
+      const others = ids.filter((x) => x !== id)
+      others.forEach((o) => { if (!info.siblings.includes(o)) info.siblings.push(o) })
+      if (!info.reasons.includes(reason)) info.reasons.push(reason)
+    })
+  }
+  for (const [, ids] of dupGroupMap) { if (ids.length > 1) addSibling(ids, '문제 텍스트 앞 100자 일치') }
+  for (const [, ids] of optGroupMap)  { if (ids.length > 1) addSibling(ids, '보기(A·B·C·D) 내용 일치') }
 
   // 날짜 목록 추출
   const dateOptions = Array.from(
@@ -1927,19 +1954,24 @@ function QuestionsTab() {
                 </div>
                 <p className="text-gray-900 text-sm font-medium leading-relaxed">{q.text}</p>
                 {dupIds.has(q.id) && (() => {
-                  const siblings = dupSiblings.get(q.id) || []
-                  const siblingNums = siblings.map((sid) => {
+                  const info = dupSiblings.get(q.id)
+                  const siblingNums = (info?.siblings || []).map((sid) => {
                     const idx = filtered.findIndex((fq) => fq.id === sid)
                     return idx >= 0 ? `Q${idx + 1}` : null
                   }).filter(Boolean)
+                  const bothFlags = dupByText.has(q.id) && dupByOpt.has(q.id)
                   return (
                     <div className="mt-1.5 flex items-start gap-1.5 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5">
                       <AlertCircle size={12} className="text-amber-600 flex-shrink-0 mt-0.5" />
-                      <p className="text-xs text-amber-700">
-                        <strong>중복 이유:</strong> 문제 앞부분 40자가{' '}
-                        {siblingNums.length > 0 ? siblingNums.join(', ') + '번 문제와 동일합니다.' : '다른 문제와 동일합니다.'}{' '}
-                        실제로 동일한 문제인지 확인 후 불필요한 문제를 삭제하세요.
-                      </p>
+                      <div className="text-xs text-amber-700 space-y-0.5">
+                        <p>
+                          <strong>중복 의심 {siblingNums.length > 0 ? `— ${siblingNums.join(', ')}번 문제와 겹침` : ''}</strong>
+                          {bothFlags && <span className="ml-1.5 bg-red-100 text-red-700 px-1.5 py-0.5 rounded font-semibold">두 기준 모두 일치 (높은 확률)</span>}
+                        </p>
+                        {(info?.reasons || []).map((r, ri) => (
+                          <p key={ri} className="text-amber-600">• {r}</p>
+                        ))}
+                      </div>
                     </div>
                   )
                 })()}
