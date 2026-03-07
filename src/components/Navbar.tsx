@@ -77,6 +77,12 @@ export default function Navbar({ currentPage, onNavigate, currentUser, onLogout,
                 </button>
                 {userMenuOpen && (
                   <div className="absolute right-0 mt-2 w-44 bg-white border border-gray-200 rounded-xl shadow-lg py-1 z-50">
+                    <button
+                      onClick={() => { onNavigate('mypage'); setUserMenuOpen(false) }}
+                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                    >
+                      마이페이지
+                    </button>
                     {canAccessExam && (
                       <button
                         onClick={() => { onNavigate('exam'); setUserMenuOpen(false) }}
@@ -155,6 +161,12 @@ export default function Navbar({ currentPage, onNavigate, currentUser, onLogout,
             {currentUser ? (
               <>
                 <p className="px-4 py-2 text-sm text-gray-500">{currentUser.lastName}{currentUser.firstName}님</p>
+                <button
+                  onClick={() => { onNavigate('mypage'); setMobileOpen(false) }}
+                  className="w-full text-left px-4 py-3 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50"
+                >
+                  마이페이지
+                </button>
                 {canAccessExam && !isAdmin && (
                   <button
                     onClick={() => { onNavigate('exam'); setMobileOpen(false) }}

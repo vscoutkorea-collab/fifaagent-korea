@@ -7,6 +7,7 @@ export type PageType =
   | 'study'
   | 'register'
   | 'payment'
+  | 'mypage'
 
 export interface Question {
   id: string

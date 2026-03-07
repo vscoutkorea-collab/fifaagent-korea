@@ -407,9 +407,9 @@ export function getPaymentSettings(): PaymentSettings {
   return stored ? JSON.parse(stored) : {
     kakaoPayQrImage: '',
     kakaoPayLink: '',
-    bankName: '',
-    accountNumber: '',
-    accountHolder: '',
+    bankName: '국민은행',
+    accountNumber: '21700204228219',
+    accountHolder: '임원빈',
   }
 }
 
