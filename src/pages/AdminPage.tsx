@@ -1878,6 +1878,17 @@ function QuestionsTab() {
             className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700">
             <Plus size={14} /> 문제 추가
           </button>
+          {questions.length > 0 && (
+            <button
+              onClick={() => {
+                if (!confirm(`전체 문제 ${questions.length}개를 삭제합니다. 복구가 불가능합니다. 계속하시겠습니까?`)) return
+                setQuestions([])
+                saveQuestions([])
+              }}
+              className="flex items-center gap-2 px-3 py-2 border border-red-200 text-red-600 rounded-xl text-sm font-medium hover:bg-red-50">
+              <Trash2 size={14} /> 전체 삭제
+            </button>
+          )}
         </div>
       </div>
 
