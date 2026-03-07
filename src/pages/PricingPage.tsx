@@ -34,7 +34,7 @@ export default function PricingPage({ onNavigate, currentUser }: PricingPageProp
     'DeepL 번역기 바로가기 제공',
     '즉시 채점',
     '합격/불합격 판정',
-    '무제한 반복 응시 가능',
+    '1년간 무제한 반복 응시',
     '매년 새로운 문제 추가',
   ]
 
@@ -152,7 +152,7 @@ export default function PricingPage({ onNavigate, currentUser }: PricingPageProp
               <div className="flex items-end gap-2 mt-2">
                 <span className="text-5xl font-bold">199,000원</span>
               </div>
-              <p className="text-gray-300 mt-2 text-sm">1회 결제, 무제한 반복 응시</p>
+              <p className="text-gray-300 mt-2 text-sm">1회 결제, 1년간 무제한 반복 응시</p>
             </div>
 
             <div className="space-y-3 mb-4">

@@ -2039,11 +2039,16 @@ function UsersTab() {
                 <p className="text-sm text-gray-500">{user.email} · {user.phone} · {user.age}세</p>
                 <p className="text-xs text-gray-400 mt-0.5">가입일: {new Date(user.createdAt).toLocaleDateString('ko-KR')}</p>
               </div>
-              <span className={`text-xs px-3 py-1 rounded-full font-medium ${
-                user.hasPaidExam ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
-              }`}>
-                {user.hasPaidExam ? '모의고사 이용 중' : '무료 회원'}
-              </span>
+              <div className="text-right">
+                <span className={`text-xs px-3 py-1 rounded-full font-medium ${
+                  user.hasPaidExam ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+                }`}>
+                  {user.hasPaidExam ? (user as any).paidPlan === 'premium' ? '프리미엄' : '스탠다드' : '무료 회원'}
+                </span>
+                {user.hasPaidExam && (user as any).paidAt && (
+                  <p className="text-xs text-gray-400 mt-1">시작일: {new Date((user as any).paidAt).toLocaleDateString('ko-KR')}</p>
+                )}
+              </div>
             </div>
           ))}
         </div>
@@ -2297,7 +2302,9 @@ function PaymentsTab() {
     save(requests.map((r) => r.id === req.id ? { ...r, status: 'approved' as const } : r))
     const users = getUsers()
     const user = users.find((u) => u.phone === req.phone || u.id === req.userId)
-    if (user) localStorage.setItem('fifa_users', JSON.stringify(users.map((u) => u.id === user.id ? { ...u, hasPaidExam: true } : u)))
+    if (user) localStorage.setItem('fifa_users', JSON.stringify(users.map((u) =>
+      u.id === user.id ? { ...u, hasPaidExam: true, paidPlan: req.plan, paidAt: new Date().toISOString() } : u
+    )))
   }
   const handleReject = (id: string) => save(requests.map((r) => r.id === id ? { ...r, status: 'rejected' as const } : r))
   const handleDelete = (id: string) => { if (!confirm('삭제할까요?')) return; save(requests.filter((r) => r.id !== id)) }

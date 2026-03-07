@@ -40,6 +40,8 @@ export interface RegisteredUser {
   email: string
   hasPaidExam: boolean
   createdAt: string
+  paidPlan?: 'standard' | 'premium'
+  paidAt?: string
 }
 
 export interface StudyPost {

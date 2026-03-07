@@ -10,7 +10,7 @@ interface PaymentPageProps {
 
 const PLANS = {
   standard: { label: '스탠다드', amount: 129000, desc: '2026년 피파 에이전트 시험 종료 시까지 무제한 응시' },
-  premium:  { label: '프리미엄', amount: 199000, desc: '1회 결제 영구 무제한 응시 + 매년 새로운 문제 추가' },
+  premium:  { label: '프리미엄', amount: 199000, desc: '1회 결제 1년간 무제한 응시 + 매년 새로운 문제 추가' },
 }
 
 function formatAmount(n: number) {

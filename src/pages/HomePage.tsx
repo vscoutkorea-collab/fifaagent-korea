@@ -165,10 +165,9 @@ export default function HomePage({ onNavigate, currentUser }: HomePageProps) {
               <Award size={32} className="text-yellow-600 mb-3" />
               <h3 className="font-bold text-yellow-900 text-lg mb-2">자격 요건</h3>
               <ul className="text-yellow-800 text-sm space-y-1">
-                <li>• 만 18세 이상</li>
+                <li>• 학력, 전공, 직업 요건 없음</li>
                 <li>• 형사 전과 없음</li>
-                <li>• 전문직 배상책임보험 가입</li>
-                <li>• 연간 자격증 갱신</li>
+                <li>• 구단, 클럽, 코치 등 이해관계자는 응시 불가</li>
               </ul>
             </div>
           </div>
