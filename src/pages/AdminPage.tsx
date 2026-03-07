@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback } from 'react'
 import {
-  Lock, Plus, Trash2, Upload, FileText, Users, AlertCircle, X,
+  Lock, Plus, Trash2, Pencil, Upload, FileText, Users, AlertCircle, X,
   Download, Eye, Image, CheckCircle, Clock, Loader, ChevronDown,
   ChevronUp, RotateCcw, FlaskConical, MessageSquare, Pin, PinOff,
   CreditCard, Settings
@@ -1683,6 +1683,8 @@ function QuestionsTab() {
   const [form, setForm] = useState({ text: '', options: ['', '', '', ''], correctAnswers: [] as number[], category: '', explanation: '' })
   const [formError, setFormError] = useState('')
   const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [editingQuestion, setEditingQuestion] = useState<Question | null>(null)
+  const [editForm, setEditForm] = useState({ text: '', options: ['','','',''], correctAnswers: [] as number[], category: '', explanation: '' })
   const [searchText, setSearchText] = useState('')
 
   const filtered = searchText
@@ -1721,6 +1723,27 @@ function QuestionsTab() {
     saveQuestions(updated)
     setForm({ text: '', options: ['', '', '', ''], correctAnswers: [], category: '', explanation: '' })
     setShowAddForm(false)
+  }
+
+  const openEdit = (q: Question) => {
+    const answers = Array.isArray(q.correctAnswer) ? q.correctAnswer : [q.correctAnswer as number]
+    setEditForm({ text: q.text, options: [...q.options], correctAnswers: answers, category: q.category ?? '', explanation: q.explanation ?? '' })
+    setEditingQuestion(q)
+  }
+
+  const handleSaveEdit = () => {
+    if (!editingQuestion) return
+    if (!editForm.text.trim() || editForm.options.some((o) => !o.trim()) || editForm.correctAnswers.length === 0) return
+    const correctAnswer: number | number[] =
+      editForm.correctAnswers.length === 1 ? editForm.correctAnswers[0] : [...editForm.correctAnswers].sort((a, b) => a - b)
+    const updated = questions.map((q) =>
+      q.id === editingQuestion.id
+        ? { ...q, text: editForm.text.trim(), options: editForm.options.map((o) => o.trim()) as [string,string,string,string], correctAnswer, category: editForm.category.trim(), explanation: editForm.explanation.trim() }
+        : q
+    )
+    setQuestions(updated)
+    saveQuestions(updated)
+    setEditingQuestion(null)
   }
 
   const handleDelete = (id: string) => {
@@ -1828,10 +1851,16 @@ function QuestionsTab() {
                   ))}
                 </div>
               </div>
-              <button onClick={() => setDeleteId(q.id)}
-                className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0">
-                <Trash2 size={16} />
-              </button>
+              <div className="flex gap-1">
+                <button onClick={() => openEdit(q)}
+                  className="p-2 text-gray-300 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors flex-shrink-0">
+                  <Pencil size={16} />
+                </button>
+                <button onClick={() => setDeleteId(q.id)}
+                  className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0">
+                  <Trash2 size={16} />
+                </button>
+              </div>
             </div>
           </div>
         ))}
@@ -1943,6 +1972,72 @@ function QuestionsTab() {
                   <Upload size={14} /> {bulkPreview.length}개 저장
                 </button>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 수정 모달 */}
+      {editingQuestion && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4 py-6 overflow-y-auto">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg my-auto">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+              <h3 className="font-bold text-gray-900 text-lg">문제 수정</h3>
+              <button onClick={() => setEditingQuestion(null)} className="p-2 rounded-lg hover:bg-gray-100"><X size={18} /></button>
+            </div>
+            <div className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+              {/* 문제 텍스트 */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">문제</label>
+                <textarea value={editForm.text} onChange={(e) => setEditForm({ ...editForm, text: e.target.value })}
+                  rows={3} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
+              </div>
+              {/* 보기 */}
+              {editForm.options.map((opt, i) => {
+                const isSelected = editForm.correctAnswers.includes(i)
+                const label = String.fromCharCode(65 + i)
+                return (
+                  <div key={i}>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      보기 {label}
+                      {isSelected && <span className="text-green-600 ml-1 font-semibold">✓ 정답</span>}
+                    </label>
+                    <div className="flex gap-2">
+                      <input value={opt} onChange={(e) => {
+                        const u = [...editForm.options]; u[i] = e.target.value; setEditForm({ ...editForm, options: u })
+                      }} className={`flex-1 border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${isSelected ? 'border-green-300 bg-green-50' : 'border-gray-200'}`} />
+                      <button onClick={() => {
+                        const cur = editForm.correctAnswers
+                        const next = cur.includes(i) ? cur.filter((x) => x !== i) : [...cur, i]
+                        setEditForm({ ...editForm, correctAnswers: next })
+                      }} className={`px-3 rounded-xl text-sm font-medium transition-colors ${isSelected ? 'bg-green-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+                        정답
+                      </button>
+                    </div>
+                  </div>
+                )
+              })}
+              {/* 카테고리 & 해설 */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">카테고리</label>
+                <input value={editForm.category} onChange={(e) => setEditForm({ ...editForm, category: e.target.value })}
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">해설</label>
+                <textarea value={editForm.explanation} onChange={(e) => setEditForm({ ...editForm, explanation: e.target.value })}
+                  rows={2} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
+              </div>
+              {editForm.correctAnswers.length === 0 && (
+                <p className="text-xs text-red-500">정답을 하나 이상 선택해 주세요.</p>
+              )}
+            </div>
+            <div className="flex gap-3 px-6 py-4 border-t border-gray-100">
+              <button onClick={() => setEditingQuestion(null)}
+                className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition-colors">취소</button>
+              <button onClick={handleSaveEdit}
+                disabled={editForm.correctAnswers.length === 0}
+                className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white rounded-xl text-sm font-semibold transition-colors">저장</button>
             </div>
           </div>
         </div>
