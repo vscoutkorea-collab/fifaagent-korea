@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { CreditCard, Building2, QrCode, CheckCircle, Clock, ChevronLeft, Copy, ExternalLink } from 'lucide-react'
+import { Building2, CheckCircle, Clock, ChevronLeft, Copy, Receipt } from 'lucide-react'
 import type { PageType, RegisteredUser } from '../types'
 import { getPaymentSettings, addPaymentRequest, getPaymentRequests } from '../data'
 
@@ -19,13 +19,15 @@ function formatAmount(n: number) {
 
 export default function PaymentPage({ onNavigate, currentUser }: PaymentPageProps) {
   const settings = getPaymentSettings()
-  const [plan, setPlan]             = useState<'standard' | 'premium'>('standard')
+  const [plan, setPlan] = useState<'standard' | 'premium'>('standard')
   const [depositorName, setDepositorName] = useState(
     currentUser ? `${currentUser.lastName}${currentUser.firstName}` : ''
   )
-  const [phone, setPhone]           = useState(currentUser?.phone ?? '')
-  const [submitted, setSubmitted]   = useState(false)
-  const [copied, setCopied]         = useState(false)
+  const [phone, setPhone] = useState(currentUser?.phone ?? '')
+  const [cashReceiptType, setCashReceiptType] = useState<'none' | 'personal' | 'business'>('none')
+  const [cashReceiptNumber, setCashReceiptNumber] = useState('')
+  const [submitted, setSubmitted] = useState(false)
+  const [copied, setCopied] = useState(false)
 
   const myRequests = getPaymentRequests().filter(
     (r) => currentUser && r.phone === currentUser.phone
@@ -40,12 +42,15 @@ export default function PaymentPage({ onNavigate, currentUser }: PaymentPageProp
 
   const handleSubmit = () => {
     if (!depositorName.trim() || !phone.trim()) return
+    if (cashReceiptType !== 'none' && !cashReceiptNumber.trim()) return
     addPaymentRequest({
       userId: currentUser?.id,
       depositorName: depositorName.trim(),
       phone: phone.trim(),
       plan,
       amount: PLANS[plan].amount,
+      cashReceiptType,
+      cashReceiptNumber: cashReceiptType !== 'none' ? cashReceiptNumber.trim() : undefined,
     })
     setSubmitted(true)
   }
@@ -57,18 +62,18 @@ export default function PaymentPage({ onNavigate, currentUser }: PaymentPageProp
           <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <Clock size={32} className="text-amber-500" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">결제 확인 중</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">입금 확인 중</h2>
           <p className="text-gray-500 mb-6 text-sm leading-relaxed">
             입금이 확인되면 관리자가 승인합니다.<br />
             승인 후 모의고사를 바로 이용하실 수 있습니다.<br />
             보통 <strong>1~2시간 내</strong> 처리됩니다.
           </p>
-          <div className="bg-gray-50 rounded-xl p-4 text-sm text-gray-600 mb-6">
-            <div className="flex justify-between mb-1">
+          <div className="bg-gray-50 rounded-xl p-4 text-sm text-gray-600 mb-6 space-y-1.5">
+            <div className="flex justify-between">
               <span>입금자명</span>
               <span className="font-semibold">{latestReq?.depositorName ?? depositorName}</span>
             </div>
-            <div className="flex justify-between mb-1">
+            <div className="flex justify-between">
               <span>플랜</span>
               <span className="font-semibold">{PLANS[latestReq?.plan ?? plan].label}</span>
             </div>
@@ -76,6 +81,12 @@ export default function PaymentPage({ onNavigate, currentUser }: PaymentPageProp
               <span>금액</span>
               <span className="font-semibold">{formatAmount(latestReq?.amount ?? PLANS[plan].amount)}</span>
             </div>
+            {(latestReq?.cashReceiptType ?? cashReceiptType) !== 'none' && (
+              <div className="flex justify-between pt-1.5 border-t border-gray-200">
+                <span>현금영수증</span>
+                <span className="font-semibold">{latestReq?.cashReceiptType === 'personal' ? '소득공제' : '지출증빙'} · {latestReq?.cashReceiptNumber ?? cashReceiptNumber}</span>
+              </div>
+            )}
           </div>
           <button onClick={() => onNavigate('home')}
             className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-colors">
@@ -104,7 +115,7 @@ export default function PaymentPage({ onNavigate, currentUser }: PaymentPageProp
     )
   }
 
-  const hasSettings = settings.bankName || settings.kakaoPayQrImage
+  const hasBank = !!(settings.bankName && settings.accountNumber)
 
   return (
     <div className="min-h-screen bg-gray-50 py-10 px-4">
@@ -119,9 +130,7 @@ export default function PaymentPage({ onNavigate, currentUser }: PaymentPageProp
 
         {/* 플랜 선택 */}
         <div className="bg-white rounded-2xl p-6 shadow-sm mb-4">
-          <h2 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <CreditCard size={18} className="text-blue-600" /> 플랜 선택
-          </h2>
+          <h2 className="font-bold text-gray-900 mb-4">플랜 선택</h2>
           <div className="space-y-3">
             {(Object.entries(PLANS) as [keyof typeof PLANS, typeof PLANS[keyof typeof PLANS]][]).map(([key, val]) => (
               <button key={key} onClick={() => setPlan(key)}
@@ -136,74 +145,45 @@ export default function PaymentPage({ onNavigate, currentUser }: PaymentPageProp
           </div>
         </div>
 
-        {/* 결제 방법 */}
-        {hasSettings ? (
+        {/* 계좌 정보 */}
+        {hasBank ? (
           <div className="bg-white rounded-2xl p-6 shadow-sm mb-4">
             <h2 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-              <Building2 size={18} className="text-blue-600" /> 입금 방법
+              <Building2 size={18} className="text-blue-600" /> 계좌 입금 정보
             </h2>
-
-            {/* 카카오페이 */}
-            {(settings.kakaoPayQrImage || settings.kakaoPayLink) && (
-              <div className="mb-5 pb-5 border-b border-gray-100">
-                <p className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                  <QrCode size={16} className="text-yellow-500" /> 카카오페이 송금
-                </p>
-                {settings.kakaoPayQrImage && (
-                  <div className="flex justify-center mb-3">
-                    <img src={settings.kakaoPayQrImage} alt="카카오페이 QR" className="w-48 h-48 object-contain rounded-xl border border-gray-200" />
-                  </div>
-                )}
-                {settings.kakaoPayLink && (
-                  <a href={settings.kakaoPayLink} target="_blank" rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-2 w-full py-2.5 bg-yellow-400 hover:bg-yellow-300 text-gray-900 rounded-xl font-semibold text-sm transition-colors">
-                    <ExternalLink size={15} /> 카카오페이 송금하기
-                  </a>
-                )}
+            <div className="bg-blue-50 rounded-xl p-4 space-y-2.5 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-500">은행</span>
+                <span className="font-semibold text-gray-900">{settings.bankName}</span>
               </div>
-            )}
-
-            {/* 계좌이체 */}
-            {settings.bankName && (
-              <div>
-                <p className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                  <Building2 size={16} className="text-blue-500" /> 계좌이체
-                </p>
-                <div className="bg-gray-50 rounded-xl p-4 space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">은행</span>
-                    <span className="font-semibold text-gray-900">{settings.bankName}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-500">계좌번호</span>
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold text-gray-900">{settings.accountNumber}</span>
-                      <button onClick={() => handleCopy(settings.accountNumber)}
-                        className="p-1 rounded hover:bg-gray-200 transition-colors">
-                        <Copy size={13} className={copied ? 'text-green-500' : 'text-gray-400'} />
-                      </button>
-                    </div>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">예금주</span>
-                    <span className="font-semibold text-gray-900">{settings.accountHolder}</span>
-                  </div>
-                  <div className="flex justify-between pt-2 border-t border-gray-200">
-                    <span className="text-gray-500">입금액</span>
-                    <span className="font-bold text-blue-600 text-base">{formatAmount(PLANS[plan].amount)}</span>
-                  </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-500">계좌번호</span>
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold text-gray-900">{settings.accountNumber}</span>
+                  <button onClick={() => handleCopy(settings.accountNumber)}
+                    className="p-1 rounded hover:bg-blue-100 transition-colors">
+                    <Copy size={13} className={copied ? 'text-green-500' : 'text-blue-400'} />
+                  </button>
                 </div>
               </div>
-            )}
+              <div className="flex justify-between">
+                <span className="text-gray-500">예금주</span>
+                <span className="font-semibold text-gray-900">{settings.accountHolder}</span>
+              </div>
+              <div className="flex justify-between pt-2 border-t border-blue-200">
+                <span className="text-gray-500">입금액</span>
+                <span className="font-bold text-blue-600 text-base">{formatAmount(PLANS[plan].amount)}</span>
+              </div>
+            </div>
           </div>
         ) : (
           <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 mb-4 text-sm text-amber-800">
-            관리자가 아직 결제 정보를 설정하지 않았습니다. 잠시 후 다시 확인해 주세요.
+            관리자가 아직 계좌 정보를 설정하지 않았습니다. 잠시 후 다시 확인해 주세요.
           </div>
         )}
 
         {/* 신청 정보 */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm mb-6">
+        <div className="bg-white rounded-2xl p-6 shadow-sm mb-4">
           <h2 className="font-bold text-gray-900 mb-4">입금 신청 정보</h2>
           <div className="space-y-4">
             <div>
@@ -221,8 +201,41 @@ export default function PaymentPage({ onNavigate, currentUser }: PaymentPageProp
           </div>
         </div>
 
+        {/* 현금영수증 */}
+        <div className="bg-white rounded-2xl p-6 shadow-sm mb-6">
+          <h2 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <Receipt size={18} className="text-green-600" /> 현금영수증 신청
+          </h2>
+          <div className="space-y-3">
+            {([
+              { value: 'none', label: '신청 안 함' },
+              { value: 'personal', label: '소득공제 (개인 주민등록번호 / 휴대폰 번호)' },
+              { value: 'business', label: '지출증빙 (사업자등록번호)' },
+            ] as const).map((opt) => (
+              <label key={opt.value} className="flex items-start gap-3 cursor-pointer">
+                <input type="radio" name="cashReceipt" value={opt.value}
+                  checked={cashReceiptType === opt.value}
+                  onChange={() => setCashReceiptType(opt.value)}
+                  className="mt-0.5 accent-blue-600" />
+                <span className="text-sm text-gray-700">{opt.label}</span>
+              </label>
+            ))}
+          </div>
+
+          {cashReceiptType !== 'none' && (
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                {cashReceiptType === 'personal' ? '주민등록번호 또는 휴대폰 번호' : '사업자등록번호'} <span className="text-red-500">*</span>
+              </label>
+              <input value={cashReceiptNumber} onChange={(e) => setCashReceiptNumber(e.target.value)}
+                placeholder={cashReceiptType === 'personal' ? '010-0000-0000' : '000-00-00000'}
+                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+          )}
+        </div>
+
         <button onClick={handleSubmit}
-          disabled={!depositorName.trim() || !phone.trim()}
+          disabled={!depositorName.trim() || !phone.trim() || (cashReceiptType !== 'none' && !cashReceiptNumber.trim())}
           className="w-full py-4 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-xl font-bold text-lg transition-colors">
           입금 완료 신청하기
         </button>

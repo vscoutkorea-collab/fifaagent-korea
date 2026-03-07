@@ -81,6 +81,8 @@ export interface PaymentRequest {
   status: 'pending' | 'approved' | 'rejected'
   createdAt: string
   note?: string
+  cashReceiptType?: 'none' | 'personal' | 'business'
+  cashReceiptNumber?: string
 }
 
 export interface PaymentSettings {

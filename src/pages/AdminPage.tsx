@@ -2342,6 +2342,12 @@ function PaymentsTab() {
                 <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-sm">
                   <div><span className="text-gray-400">입금자명</span><span className="font-semibold ml-2">{req.depositorName}</span></div>
                   <div><span className="text-gray-400">연락처</span><span className="font-semibold ml-2">{req.phone}</span></div>
+                  {req.cashReceiptType && req.cashReceiptType !== 'none' && (
+                    <div className="col-span-2">
+                      <span className="text-gray-400">현금영수증</span>
+                      <span className="font-semibold ml-2">{req.cashReceiptType === 'personal' ? '소득공제' : '지출증빙'} · {req.cashReceiptNumber}</span>
+                    </div>
+                  )}
                   <div className="col-span-2 text-xs text-gray-400 mt-1">{new Date(req.createdAt).toLocaleString('ko-KR')}</div>
                 </div>
               </div>
