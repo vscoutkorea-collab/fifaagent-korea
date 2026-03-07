@@ -304,12 +304,6 @@ function ExamRunner({ questions, onComplete, onNavigate }: {
                 )}
               </p>
 
-              {isMulti(currentQ) && (
-                <p className="text-sm text-purple-600 mb-4 font-medium">
-                  해당하는 항목을 모두 선택하세요 (복수 정답)
-                </p>
-              )}
-
               <div className="space-y-3">
                 {currentQ.options.map((opt, i) => {
                   const selected = selectedSet.has(i)
