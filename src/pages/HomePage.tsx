@@ -1,4 +1,4 @@
-import { CheckCircle, Clock, BookOpen, Award, ChevronRight, Star, Users, FileText } from 'lucide-react'
+import { CheckCircle, Clock, BookOpen, Award, ChevronRight, Users, FileText } from 'lucide-react'
 import type { PageType, RegisteredUser } from '../types'
 
 interface HomePageProps {
@@ -37,26 +37,7 @@ export default function HomePage({ onNavigate, currentUser }: HomePageProps) {
     { value: '75점', label: '합격 기준점수' },
   ]
 
-  const testimonials = [
-    {
-      name: '김준혁',
-      role: 'FIFA 에이전트',
-      text: '모의고사 덕분에 실전 감각을 키울 수 있었습니다. 오픈북 연습까지 할 수 있어서 실제 시험이 훨씬 편했어요.',
-      stars: 5,
-    },
-    {
-      name: '이수진',
-      role: 'FIFA 에이전트',
-      text: '커뮤니티에서 합격자들의 조언을 들을 수 있어 정말 좋았습니다. 3개월 준비 후 한 번에 합격!',
-      stars: 5,
-    },
-    {
-      name: '박민성',
-      role: 'FIFA 에이전트 준비 중',
-      text: '해설이 너무 자세해서 틀린 문제도 완벽하게 이해할 수 있었습니다. 강력 추천합니다.',
-      stars: 5,
-    },
-  ]
+  
 
   return (
     <div className="min-h-screen">
@@ -170,31 +151,6 @@ export default function HomePage({ onNavigate, currentUser }: HomePageProps) {
                 <li>• 구단, 클럽, 코치 등 이해관계자는 응시 불가</li>
               </ul>
             </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="py-20 px-4 bg-gray-50">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-14">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">합격자 후기</h2>
-            <p className="text-gray-500">모의고사를 통해 합격한 분들의 이야기</p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {testimonials.map((t, i) => (
-              <div key={i} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                <div className="flex gap-1 mb-3">
-                  {[...Array(t.stars)].map((_, j) => (
-                    <Star key={j} size={16} className="text-yellow-400 fill-yellow-400" />
-                  ))}
-                </div>
-                <p className="text-gray-700 text-sm leading-relaxed mb-4">"{t.text}"</p>
-                <div>
-                  <div className="font-semibold text-gray-900">{t.name}</div>
-                  <div className="text-gray-500 text-xs">{t.role}</div>
-                </div>
-              </div>
-            ))}
           </div>
         </div>
       </section>
