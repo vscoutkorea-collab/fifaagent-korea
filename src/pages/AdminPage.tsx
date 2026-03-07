@@ -1944,6 +1944,7 @@ function QuestionsTab() {
                         const u = [...form.options]; u[i] = e.target.value; setForm({ ...form, options: u })
                       }} className={`flex-1 border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${isSelected ? 'border-green-300 bg-green-50' : 'border-gray-200'}`} />
                       <button
+                        type="button"
                         onClick={() => {
                           const cur = form.correctAnswers
                           const next = cur.includes(i) ? cur.filter((x) => x !== i) : [...cur, i]
@@ -2050,7 +2051,7 @@ function QuestionsTab() {
                       <input value={opt} onChange={(e) => {
                         const u = [...editForm.options]; u[i] = e.target.value; setEditForm({ ...editForm, options: u })
                       }} className={`flex-1 border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${isSelected ? 'border-green-300 bg-green-50' : 'border-gray-200'}`} />
-                      <button onClick={() => {
+                      <button type="button" onClick={() => {
                         const cur = editForm.correctAnswers
                         const next = cur.includes(i) ? cur.filter((x) => x !== i) : [...cur, i]
                         setEditForm({ ...editForm, correctAnswers: next })
