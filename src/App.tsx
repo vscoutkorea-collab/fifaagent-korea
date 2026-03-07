@@ -41,6 +41,8 @@ export default function App() {
 
   const handleNavigate = (target: PageType) => {
     window.scrollTo({ top: 0, behavior: 'instant' })
+    const freshUser = getCurrentUser()
+    if (freshUser) setCurrentUserState(freshUser)
     setPage(target)
   }
 

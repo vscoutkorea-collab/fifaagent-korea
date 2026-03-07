@@ -107,7 +107,19 @@ export default function ExamPage({ onComplete, onNavigate }: ExamPageProps) {
   const answeredCount = answers.filter((a) => a.selectedAnswer !== null && normalizeAnswer(a.selectedAnswer).length > 0).length
   const isWarning = timeLeft <= 300
 
-  if (!currentQ) return null
+  if (!currentQ) return (
+    <div className="min-h-screen bg-gray-900 flex items-center justify-center px-4">
+      <div className="bg-white rounded-2xl p-8 max-w-sm w-full text-center">
+        <AlertCircle size={40} className="text-amber-500 mx-auto mb-4" />
+        <h2 className="text-xl font-bold text-gray-900 mb-2">등록된 문제가 없습니다</h2>
+        <p className="text-gray-500 text-sm mb-6">관리자가 아직 문제를 등록하지 않았습니다.<br />잠시 후 다시 시도해 주세요.</p>
+        <button onClick={() => onNavigate('home')}
+          className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-colors">
+          홈으로 돌아가기
+        </button>
+      </div>
+    </div>
+  )
 
   return (
     <div className="min-h-screen bg-gray-900 flex flex-col">
