@@ -2014,14 +2014,22 @@ function MaterialsTab() {
 ───────────────────────────────────────── */
 function UsersTab() {
   const [users, setUsers] = useState<RegisteredUser[]>(() => getUsers())
+  const [grantingId, setGrantingId] = useState<string | null>(null)
   const paid = users.filter((u) => u.hasPaidExam).length
 
-  const toggleAccess = (userId: string, grant: boolean) => {
-    const updated = users.map((u) => {
-      if (u.id !== userId) return u
-      if (grant) return { ...u, hasPaidExam: true, paidPlan: (u as any).paidPlan ?? 'standard', paidAt: (u as any).paidAt ?? new Date().toISOString() }
-      return { ...u, hasPaidExam: false }
-    })
+  const applyGrant = (userId: string, plan: 'standard' | 'premium') => {
+    const updated = users.map((u) =>
+      u.id === userId ? { ...u, hasPaidExam: true, paidPlan: plan, paidAt: (u as any).paidAt ?? new Date().toISOString() } : u
+    )
+    setUsers(updated)
+    saveUsers(updated)
+    setGrantingId(null)
+  }
+
+  const revokeAccess = (userId: string) => {
+    const updated = users.map((u) =>
+      u.id === userId ? { ...u, hasPaidExam: false } : u
+    )
     setUsers(updated)
     saveUsers(updated)
   }
@@ -2061,14 +2069,29 @@ function UsersTab() {
                 )}
                 {user.hasPaidExam ? (
                   <button
-                    onClick={() => { if (confirm(`${user.lastName}${user.firstName}님의 모의고사 권한을 해제할까요?`)) toggleAccess(user.id, false) }}
+                    onClick={() => { if (confirm(`${user.lastName}${user.firstName}님의 모의고사 권한을 해제할까요?`)) revokeAccess(user.id) }}
                     className="text-xs px-3 py-1.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 transition-colors font-medium"
                   >
                     권한 해제
                   </button>
+                ) : grantingId === user.id ? (
+                  <div className="flex flex-col gap-1.5 items-end">
+                    <p className="text-xs text-gray-500 font-medium">플랜 선택</p>
+                    <div className="flex gap-1.5">
+                      <button onClick={() => applyGrant(user.id, 'standard')}
+                        className="text-xs px-3 py-1.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors font-medium">
+                        스탠다드
+                      </button>
+                      <button onClick={() => applyGrant(user.id, 'premium')}
+                        className="text-xs px-3 py-1.5 rounded-lg bg-purple-600 text-white hover:bg-purple-700 transition-colors font-medium">
+                        프리미엄
+                      </button>
+                    </div>
+                    <button onClick={() => setGrantingId(null)} className="text-xs text-gray-400 hover:text-gray-600">취소</button>
+                  </div>
                 ) : (
                   <button
-                    onClick={() => toggleAccess(user.id, true)}
+                    onClick={() => setGrantingId(user.id)}
                     className="text-xs px-3 py-1.5 rounded-lg border border-blue-200 text-blue-600 hover:bg-blue-50 transition-colors font-medium"
                   >
                     권한 부여
