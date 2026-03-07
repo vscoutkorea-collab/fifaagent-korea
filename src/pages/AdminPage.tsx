@@ -73,15 +73,25 @@ function isCheckedPrefix(prefix: string): boolean {
 /** 노이즈 줄 필터 */
 const NOISE_LINE_RE = /^(not\s+yet\s+answered|answered|marked\s+out|flag\s+question|edit\s+question|your\s+answer|correct\s+answer|점수|배점|남은|time\s+left|finish\s+attempt|quiz\s+navigation|page\s+\d|\d+\s*\/\s*\d+\s*pt|question$|q$)/i
 
+/** 보기 레이블 → 0-based 인덱스 */
+function optionIndex(label: string): number {
+  const m: Record<string, number> = {
+    A:0,B:1,C:2,D:3,a:0,b:1,c:2,d:3,
+    '①':0,'②':1,'③':2,'④':3,
+    '1':0,'2':1,'3':2,'4':3,
+  }
+  return m[label] ?? -1
+}
+
 /**
  * OCR 원문 → 문제/보기/정답 파싱
  *
- * 핵심 전략:
- *  1. "Select one[or more]:" 키워드로 문제부 / 보기부 1차 분리
- *     (공백 없는 "Selectone:" 도 처리)
- *  2. 보기부 전체를 한 줄로 펼친 뒤 a. b. c. d. 위치를 순서대로 스캔
- *     → OCR 이 줄바꿈 없이 한 줄에 몰아쓰는 경우도 대응
- *  3. 각 옵션 앞 최대 25자 prefix 에서 체크 기호를 검사해 정답 판별
+ * 지원 형식:
+ *  1. "Select one[or more]:" 키워드 기반 (영어 시험지)
+ *  2. a. / a) / A. / A) / (a) 형식 보기
+ *  3. ①②③④  형식 보기
+ *  4. 1. / 1) / (1) 형식 보기
+ *  5. 체크마크/강조 표시로 정답 판별
  */
 function parseQuestionText(raw: string): Partial<ParsedQuestion> {
   const normalized = raw
@@ -98,8 +108,7 @@ function parseQuestionText(raw: string): Partial<ParsedQuestion> {
     selectOneOrMore: false,
   }
 
-  // ── Step 1: "Select one[or more]:" 으로 문제 / 보기 분리 ─────
-  // "Selectone:" (공백 없음) 도 허용
+  // ── Step 1: "Select one[or more]:" 로 문제/보기 분리 ──────────
   const selectMatch = normalized.match(/Select\s*one(?:\s+or\s+more)?\s*[:：]/i)
   result.selectOneOrMore = selectMatch ? /or\s+more/i.test(selectMatch[0]) : false
 
@@ -110,14 +119,31 @@ function parseQuestionText(raw: string): Partial<ParsedQuestion> {
     questionRaw = normalized.slice(0, selectMatch.index)
     optionsRaw  = normalized.slice(selectMatch.index + selectMatch[0].length)
   } else {
-    // "Select one:" 없으면 첫 번째 "a. " 위치로 분리
-    const aMatch = normalized.match(/(?<![A-Za-z])a\s*[.)]\s+[A-Z]/i)
-    if (aMatch?.index !== undefined) {
-      questionRaw = normalized.slice(0, aMatch.index)
-      optionsRaw  = normalized.slice(aMatch.index)
+    // 첫 번째 보기 행 위치를 탐지해서 분리
+    const lines = normalized.split('\n')
+    let splitLine = -1
+    for (let i = 0; i < lines.length; i++) {
+      const l = lines[i].trim()
+      if (!l) continue
+      // a. / a) / A. / A) / (a) / ① / 1. / 1) / (1) 형식 감지
+      if (/^(?:[○◯◎☐□◌✓✔☑✅√✗✘✱✲⊙◉●◈◆■▪⬤⚫🔘vV\/\\©®~@•\s]*)(?:\([a-dA-D1]\)|[a-dA-D①]\s*[.)：:\s]|1\s*[.)：:\s])/u.test(l)) {
+        splitLine = i
+        break
+      }
+    }
+    if (splitLine > 0) {
+      questionRaw = lines.slice(0, splitLine).join('\n')
+      optionsRaw  = lines.slice(splitLine).join('\n')
     } else {
-      questionRaw = normalized
-      optionsRaw  = ''
+      // fallback: 첫 번째 a. 위치로 분리
+      const aMatch = normalized.match(/(?<![A-Za-z])a\s*[.)]\s+[A-Z]/i)
+      if (aMatch?.index !== undefined) {
+        questionRaw = normalized.slice(0, aMatch.index)
+        optionsRaw  = normalized.slice(aMatch.index)
+      } else {
+        questionRaw = normalized
+        optionsRaw  = ''
+      }
     }
   }
 
@@ -136,104 +162,89 @@ function parseQuestionText(raw: string): Partial<ParsedQuestion> {
 
   result.text = questionLines.join(' ').trim()
 
-  // 정답 명시 줄 ("정답: B") 처리
+  // 정답 명시 줄 처리
   for (const l of questionLines) {
     const am = l.match(/^(?:정답|답|answer)\s*[:：]\s*([A-Da-d①②③④1-4])/i)
     if (am) {
-      const map: Record<string, number> = { A:0,B:1,C:2,D:3,'①':0,'②':1,'③':2,'④':3,'1':0,'2':1,'3':2,'4':3 }
-      result.correctAnswer = map[am[1].toUpperCase()] ?? -1
+      result.correctAnswer = optionIndex(am[1]) 
     }
   }
 
   // ── Step 3: 보기 추출 ─────────────────────────────────────────
   if (!optionsRaw.trim()) return result
 
-  // 보기부를 단일 줄로 펼침 (OCR 이 한 줄로 쭉 이어 쓴 경우도 대응)
-  const flat = optionsRaw.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim()
-
-  // Moodle "Correct" 레이블 위치 확인
-  const moodleCorrectIdx = (() => {
-    const m = flat.match(/\bCorrect\b/i)
-    return m?.index ?? -1
-  })()
-
-  // a → b → c → d 순서로 스캔해 각 보기의 시작 인덱스를 찾는다
-  type Boundary = { letterIdx: number; textStart: number; prefixStart: number }
-  const boundaries: Boundary[] = []
-  const LETTERS = ['A', 'B', 'C', 'D']
-  let searchFrom = 0
-
-  for (let li = 0; li < 4; li++) {
-    const letter = LETTERS[li]
-    // 패턴: [letter][.) ][대문자로 시작하는 텍스트]
-    // 'searchFrom' 이후에서만 검색해 순서 보장
-    const re = new RegExp(`(?<![A-Za-z])${letter}\\s*[.)]\\s+(?=[A-Za-z])`, 'gi')
-    re.lastIndex = searchFrom
-    const m = re.exec(flat)
-    if (m) {
-      boundaries.push({
-        letterIdx: li,
-        textStart: m.index + m[0].length,
-        prefixStart: Math.max(searchFrom, m.index - 25),
-      })
-      searchFrom = m.index + 1
-    }
-  }
-
-  // 각 보기 텍스트 추출
-  for (let i = 0; i < boundaries.length; i++) {
-    const b    = boundaries[i]
-    const end  = i + 1 < boundaries.length ? boundaries[i + 1].prefixStart : flat.length
-    const text = flat.slice(b.textStart, end).trim()
-
-    // 정답 여부: prefix 에 체크 기호가 있거나 Moodle "Correct" 가 이 보기 직전에 있는지
-    const prefix  = flat.slice(b.prefixStart, b.textStart)
-    const correct =
-      isCheckedPrefix(prefix) ||
-      (moodleCorrectIdx >= 0 &&
-        moodleCorrectIdx >= b.prefixStart - 40 &&
-        moodleCorrectIdx < b.textStart)
-
-    ;(result.options as string[])[b.letterIdx] = text
-    if (correct && result.correctAnswer === -1) result.correctAnswer = b.letterIdx
-  }
-
-  // 보기를 못 찾았으면 (boundaries 0개) 줄 단위 파싱으로 폴백
-  if (boundaries.length === 0) {
-    let markNext = false
-    let lastIdx  = -1
-    for (const line of optionsRaw.split('\n').map((l) => l.trim()).filter(Boolean)) {
-      if (/^correct\b/i.test(line) && line.length < 20) { markNext = true; continue }
-      if (NOISE_LINE_RE.test(line)) continue
-      const om = line.match(
-        /^([○◯◎☐□◌✓✔☑✅√✗✘✱✲⊙◉●◈◆■▪⬤⚫🔘vV\/\\©®~@•\s]*)\s*([a-dA-D①②③④])\s*[.)]\s*(.*)/u
-      )
-      if (om) {
-        const map: Record<string, number> = { A:0,B:1,C:2,D:3,'①':0,'②':1,'③':2,'④':3 }
-        const idx = map[om[2].toUpperCase()] ?? -1
-        if (idx >= 0) {
-          let correct = isCheckedPrefix(om[1])
-          if (!correct && markNext) { correct = true; markNext = false }
-          ;(result.options as string[])[idx] = om[3].trim()
-          if (correct && result.correctAnswer === -1) result.correctAnswer = idx
-          lastIdx = idx
-        }
-      } else if (lastIdx >= 0) {
-        ;(result.options as string[])[lastIdx] += ' ' + line
-      }
-    }
-  }
-
-  // 복수 정답 감지 (체크 기호가 여러 보기에 있는 경우)
   const checkedIdxs: number[] = []
-  for (let i = 0; i < boundaries.length; i++) {
-    const b      = boundaries[i]
-    const prefix = flat.slice(b.prefixStart, b.textStart)
-    if (isCheckedPrefix(prefix)) checkedIdxs.push(b.letterIdx)
+
+  // 줄 단위 파싱 (①②③④, a., a), (a), 1., 1), (1) 모두 처리)
+  let lastIdx = -1
+  let markNext = false
+  for (const line of optionsRaw.split('\n').map((l) => l.trim()).filter(Boolean)) {
+    if (NOISE_LINE_RE.test(line)) continue
+    if (/^correct\b/i.test(line) && line.length < 20) { markNext = true; continue }
+
+    // 다양한 보기 시작 패턴
+    const om = line.match(
+      /^([○◯◎☐□◌✓✔☑✅√✗✘✱✲⊙◉●◈◆■▪⬤⚫🔘vV\/\\©®~@•\s]*)\s*(?:\(([a-dA-D1-4])\)|([a-dA-D①②③④])\s*[.)：:\s]|([1-4])\s*[.)：:\s])\s*(.*)/u
+    )
+    if (om) {
+      const label = (om[2] || om[3] || om[4] || '').toUpperCase()
+      // ①→A, ②→B 변환
+      const labelNorm = label === '①' ? 'A' : label === '②' ? 'B' : label === '③' ? 'C' : label === '④' ? 'D' : label
+      const idx = optionIndex(labelNorm)
+      if (idx >= 0) {
+        let correct = isCheckedPrefix(om[1])
+        if (!correct && markNext) { correct = true; markNext = false }
+        ;(result.options as string[])[idx] = om[5].trim()
+        if (correct) checkedIdxs.push(idx)
+        lastIdx = idx
+      }
+    } else if (lastIdx >= 0) {
+      ;(result.options as string[])[lastIdx] += ' ' + line
+    }
   }
+
+  // "Select one:" 없이 flat 스캔도 병행 (줄 파싱 실패 시 fallback)
+  if ((result.options as string[]).filter(Boolean).length < 2) {
+    const flat = optionsRaw.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim()
+    const moodleCorrectIdx = flat.match(/\bCorrect\b/i)?.index ?? -1
+    type Boundary = { letterIdx: number; textStart: number; prefixStart: number }
+    const boundaries: Boundary[] = []
+    // a.b.c.d / ①②③④ / 1.2.3.4 전부 탐색
+    const LABEL_PATTERNS = [
+      ['A','B','C','D'],
+    ]
+    for (const labels of LABEL_PATTERNS) {
+      const found: Boundary[] = []
+      let sf = 0
+      for (let li = 0; li < labels.length; li++) {
+        const ltr = labels[li]
+        const re = new RegExp(`(?<![A-Za-z])${ltr}\\s*[.)]\\s+(?=[A-Za-z0-9])`, 'gi')
+        re.lastIndex = sf
+        const m = re.exec(flat)
+        if (m) {
+          found.push({ letterIdx: li, textStart: m.index + m[0].length, prefixStart: Math.max(sf, m.index - 25) })
+          sf = m.index + 1
+        }
+      }
+      if (found.length >= 2) { boundaries.push(...found); break }
+    }
+    for (let i = 0; i < boundaries.length; i++) {
+      const b    = boundaries[i]
+      const end  = i + 1 < boundaries.length ? boundaries[i + 1].prefixStart : flat.length
+      const text = flat.slice(b.textStart, end).trim()
+      const prefix = flat.slice(b.prefixStart, b.textStart)
+      const correct = isCheckedPrefix(prefix) || (moodleCorrectIdx >= 0 && moodleCorrectIdx >= b.prefixStart - 40 && moodleCorrectIdx < b.textStart)
+      ;(result.options as string[])[b.letterIdx] = text
+      if (correct) checkedIdxs.push(b.letterIdx)
+    }
+  }
+
+  // 정답 확정
   if (checkedIdxs.length > 1) {
     result.correctAnswer   = checkedIdxs[0]
     result.multipleCorrect = checkedIdxs
+  } else if (checkedIdxs.length === 1 && result.correctAnswer === -1) {
+    result.correctAnswer = checkedIdxs[0]
   }
 
   return result
@@ -894,38 +905,56 @@ async function preprocessImageForOcr(file: File): Promise<Blob> {
    "Select one[or more]:" 가 2회 이상 나오면 여러 문제로 분리
 ───────────────────────────────────────── */
 function splitIntoQuestions(raw: string): string[] {
+  // 1. "Select one[or more]:" 기준 분리
   const selectMatches = [...raw.matchAll(/Select\s*one(?:\s+or\s+more)?\s*[:：]/gi)]
-  if (selectMatches.length <= 1) return [raw]
-
-  const splitPoints: number[] = [0]
-
-  for (let i = 1; i < selectMatches.length; i++) {
-    const prevEnd     = selectMatches[i - 1].index! + selectMatches[i - 1][0].length
-    const currStart   = selectMatches[i].index!
-    const between     = raw.slice(prevEnd, currStart)
-
-    // "d." 옵션이 끝나는 위치 뒤를 분리 지점으로 사용
-    const dMatches = [...between.matchAll(/[dD]\s*[.)]\s+[^\n]+(\n|$)/gm)]
-    if (dMatches.length > 0) {
-      const lastD   = dMatches[dMatches.length - 1]
-      const afterD  = prevEnd + lastD.index! + lastD[0].length
-      // 다음 질문 텍스트의 실제 시작(빈 줄 이후 첫 내용)
-      const gap     = raw.slice(afterD, currStart)
-      const content = gap.match(/\S/)
-      splitPoints.push(content ? afterD + content.index! : afterD)
-    } else {
-      // fallback: 사이 텍스트의 중반부
-      splitPoints.push(prevEnd + Math.floor(between.length * 0.6))
+  if (selectMatches.length > 1) {
+    const splitPoints: number[] = [0]
+    for (let i = 1; i < selectMatches.length; i++) {
+      const prevEnd   = selectMatches[i - 1].index! + selectMatches[i - 1][0].length
+      const currStart = selectMatches[i].index!
+      const between   = raw.slice(prevEnd, currStart)
+      const dMatches  = [...between.matchAll(/[dD①4]\s*[.)]\s+[^\n]+(\n|$)/gm)]
+      if (dMatches.length > 0) {
+        const lastD  = dMatches[dMatches.length - 1]
+        const afterD = prevEnd + lastD.index! + lastD[0].length
+        const gap    = raw.slice(afterD, currStart)
+        const cnt    = gap.match(/\S/)
+        splitPoints.push(cnt ? afterD + cnt.index! : afterD)
+      } else {
+        splitPoints.push(prevEnd + Math.floor(between.length * 0.6))
+      }
     }
+    splitPoints.push(raw.length)
+    const chunks: string[] = []
+    for (let i = 0; i < splitPoints.length - 1; i++) {
+      const chunk = raw.slice(splitPoints[i], splitPoints[i + 1]).trim()
+      if (chunk) chunks.push(chunk)
+    }
+    if (chunks.length > 1) return chunks
   }
-  splitPoints.push(raw.length)
 
-  const chunks: string[] = []
-  for (let i = 0; i < splitPoints.length - 1; i++) {
-    const chunk = raw.slice(splitPoints[i], splitPoints[i + 1]).trim()
-    if (chunk) chunks.push(chunk)
+  // 2. 문제 번호 패턴으로 분리 (예: "1.", "Q1.", "Question 1" 등이 새 줄에 등장)
+  const lines = raw.split('\n')
+  const questionStarts: number[] = []
+  let charPos = 0
+  for (let i = 0; i < lines.length; i++) {
+    const l = lines[i].trim()
+    if (/^(?:Q\.?\s*)?\d{1,3}[\.\)]\s+\S/.test(l) && l.length > 5) {
+      questionStarts.push(charPos)
+    }
+    charPos += lines[i].length + 1
   }
-  return chunks.length > 1 ? chunks : [raw]
+  if (questionStarts.length > 1) {
+    questionStarts.push(raw.length)
+    const chunks: string[] = []
+    for (let i = 0; i < questionStarts.length - 1; i++) {
+      const chunk = raw.slice(questionStarts[i], questionStarts[i + 1]).trim()
+      if (chunk) chunks.push(chunk)
+    }
+    if (chunks.length > 1) return chunks
+  }
+
+  return [raw]
 }
 
 /* ────────────────────────────────────────
