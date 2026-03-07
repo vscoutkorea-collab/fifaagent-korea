@@ -1844,27 +1844,39 @@ function QuestionsTab() {
   return (
     <div>
       <div className="flex flex-col gap-3 mb-4">
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2">
           <p className="text-gray-500 text-sm">총 <strong className="text-gray-900">{questions.length}</strong>개</p>
           <input
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
             placeholder="문제 검색..."
-            className="border border-gray-200 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-48"
+            className="border border-gray-200 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-44"
           />
-          <select value={dateFilter} onChange={(e) => setDateFilter(e.target.value)}
+          <select value={dateFilter === 'dup' ? 'all' : dateFilter} onChange={(e) => setDateFilter(e.target.value)}
             className="border border-gray-200 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
             <option value="all">전체 날짜</option>
-            {dupIds.size > 0 && <option value="dup">⚠ 중복 문제만 ({dupIds.size}개)</option>}
             {dateOptions.map((d) => (
               <option key={d} value={d}>{d === '날짜 없음' ? '날짜 없음' : new Date(d + 'T00:00:00').toLocaleDateString('ko-KR', { year:'numeric', month:'long', day:'numeric' })}</option>
             ))}
           </select>
+          {dupIds.size > 0 && (
+            <button
+              onClick={() => setDateFilter(dateFilter === 'dup' ? 'all' : 'dup')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium border transition-colors ${
+                dateFilter === 'dup'
+                  ? 'bg-amber-500 text-white border-amber-500'
+                  : 'bg-amber-50 text-amber-700 border-amber-300 hover:bg-amber-100'
+              }`}
+            >
+              <AlertCircle size={14} />
+              중복 문제만 ({dupIds.size}개)
+            </button>
+          )}
         </div>
-        {dupIds.size > 0 && (
+        {dupIds.size > 0 && dateFilter !== 'dup' && (
           <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2 text-sm text-amber-800">
             <AlertCircle size={14} className="flex-shrink-0" />
-            <span>중복 의심 문제 <strong>{dupIds.size}개</strong> 감지 — 위 필터에서 "중복 문제만" 선택하여 확인하세요</span>
+            <span>중복 의심 문제 <strong>{dupIds.size}개</strong> 감지됨</span>
           </div>
         )}
       </div>
