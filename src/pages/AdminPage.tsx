@@ -1704,18 +1704,23 @@ function QuestionsTab() {
   const [searchText, setSearchText] = useState('')
   const [dateFilter, setDateFilter] = useState<string>('all')
 
-  // 중복 문제 감지 (텍스트 앞 30자 기준)
-  const dupSet = new Set<string>()
-  const dupIds = new Set<string>()
+  // 중복 문제 감지: key → [id, ...] 그룹핑
+  const dupGroupMap = new Map<string, string[]>()
   for (const q of questions) {
     const key = q.text.trim().toLowerCase().slice(0, 40)
-    if (dupSet.has(key)) dupIds.add(q.id)
-    else dupSet.add(key)
+    if (!dupGroupMap.has(key)) dupGroupMap.set(key, [])
+    dupGroupMap.get(key)!.push(q.id)
   }
-  // 기존 id도 중복으로 표시
-  for (const q of questions) {
-    const key = q.text.trim().toLowerCase().slice(0, 40)
-    if ([...questions].filter((x) => x.text.trim().toLowerCase().slice(0, 40) === key).length > 1) dupIds.add(q.id)
+  // 같은 key를 가진 id들 → 중복 대상 목록 저장 (자신 제외)
+  const dupIds = new Set<string>()
+  const dupSiblings = new Map<string, string[]>() // id → 함께 중복인 다른 id들
+  for (const [, ids] of dupGroupMap) {
+    if (ids.length > 1) {
+      ids.forEach((id) => {
+        dupIds.add(id)
+        dupSiblings.set(id, ids.filter((x) => x !== id))
+      })
+    }
   }
 
   // 날짜 목록 추출
@@ -1917,10 +1922,27 @@ function QuestionsTab() {
                 <div className="flex items-center gap-2 mb-2 flex-wrap">
                   <span className="text-xs font-bold text-gray-400">Q{i + 1}</span>
                   <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full">{q.category}</span>
-                  {dupIds.has(q.id) && <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">⚠ 중복</span>}
+                  {dupIds.has(q.id) && <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">⚠ 중복 의심</span>}
                   {q.createdAt && <span className="text-xs text-gray-400">{new Date(q.createdAt).toLocaleDateString('ko-KR')}</span>}
                 </div>
                 <p className="text-gray-900 text-sm font-medium leading-relaxed">{q.text}</p>
+                {dupIds.has(q.id) && (() => {
+                  const siblings = dupSiblings.get(q.id) || []
+                  const siblingNums = siblings.map((sid) => {
+                    const idx = filtered.findIndex((fq) => fq.id === sid)
+                    return idx >= 0 ? `Q${idx + 1}` : null
+                  }).filter(Boolean)
+                  return (
+                    <div className="mt-1.5 flex items-start gap-1.5 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5">
+                      <AlertCircle size={12} className="text-amber-600 flex-shrink-0 mt-0.5" />
+                      <p className="text-xs text-amber-700">
+                        <strong>중복 이유:</strong> 문제 앞부분 40자가{' '}
+                        {siblingNums.length > 0 ? siblingNums.join(', ') + '번 문제와 동일합니다.' : '다른 문제와 동일합니다.'}{' '}
+                        실제로 동일한 문제인지 확인 후 불필요한 문제를 삭제하세요.
+                      </p>
+                    </div>
+                  )
+                })()}
                 <div className="mt-2 space-y-0.5">
                   {q.options.map((opt, j) => {
                     const isCorrect = Array.isArray(q.correctAnswer)
