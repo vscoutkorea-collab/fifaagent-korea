@@ -52,7 +52,7 @@ export default function PricingPage({ onNavigate, currentUser }: PricingPageProp
       onNavigate('exam')
       return
     }
-    onNavigate('register')
+    onNavigate('payment')
   }
 
   return (

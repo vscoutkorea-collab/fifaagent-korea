@@ -11,6 +11,7 @@ const RegisterPage   = lazy(() => import('./pages/RegisterPage'))
 const AdminPage      = lazy(() => import('./pages/AdminPage'))
 const ExamPage       = lazy(() => import('./pages/ExamPage'))
 const ExamResultPage = lazy(() => import('./pages/ExamResultPage'))
+const PaymentPage    = lazy(() => import('./pages/PaymentPage'))
 
 function PageSpinner() {
   return (
@@ -53,6 +54,8 @@ export default function App() {
         return <HomePage onNavigate={handleNavigate} currentUser={currentUser} />
       case 'pricing':
         return <PricingPage onNavigate={handleNavigate} currentUser={currentUser} />
+      case 'payment':
+        return <PaymentPage onNavigate={handleNavigate} currentUser={currentUser} />
       case 'study':
         return <StudyPage currentUser={currentUser} isAdmin={isAdmin} />
       case 'register':

@@ -68,3 +68,23 @@ export interface StudyMaterial {
   content: string
   uploadedAt: string
 }
+
+export interface PaymentRequest {
+  id: string
+  userId?: string
+  depositorName: string
+  phone: string
+  plan: 'standard' | 'premium'
+  amount: number
+  status: 'pending' | 'approved' | 'rejected'
+  createdAt: string
+  note?: string
+}
+
+export interface PaymentSettings {
+  kakaoPayQrImage: string
+  kakaoPayLink: string
+  bankName: string
+  accountNumber: string
+  accountHolder: string
+}

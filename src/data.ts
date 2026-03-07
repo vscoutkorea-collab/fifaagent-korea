@@ -1,4 +1,4 @@
-import type { Question, StudyPost, StudyMaterial, RegisteredUser, ExamResult } from './types'
+import type { Question, StudyPost, StudyMaterial, RegisteredUser, ExamResult, PaymentRequest, PaymentSettings } from './types'
 
 export const SAMPLE_QUESTIONS: Question[] = [
   {
@@ -297,6 +297,8 @@ const STORAGE_KEYS = {
   STUDY_POSTS: 'fifa_study_posts',
   CURRENT_USER: 'fifa_current_user',
   EXAM_RESULT: 'fifa_exam_result',
+  PAYMENT_REQUESTS: 'fifa_payment_requests',
+  PAYMENT_SETTINGS: 'fifa_payment_settings',
 }
 
 export function getQuestions(): Question[] {
@@ -377,4 +379,40 @@ export function getRandomExamQuestions(count = 20): Question[] {
   if (all.length <= count) return [...all]
   const shuffled = [...all].sort(() => Math.random() - 0.5)
   return shuffled.slice(0, count)
+}
+
+export function getPaymentRequests(): PaymentRequest[] {
+  const stored = localStorage.getItem(STORAGE_KEYS.PAYMENT_REQUESTS)
+  return stored ? JSON.parse(stored) : []
+}
+
+export function savePaymentRequests(requests: PaymentRequest[]): void {
+  localStorage.setItem(STORAGE_KEYS.PAYMENT_REQUESTS, JSON.stringify(requests))
+}
+
+export function addPaymentRequest(req: Omit<PaymentRequest, 'id' | 'createdAt' | 'status'>): PaymentRequest {
+  const requests = getPaymentRequests()
+  const newReq: PaymentRequest = {
+    ...req,
+    id: `pay_${Date.now()}`,
+    status: 'pending',
+    createdAt: new Date().toISOString(),
+  }
+  savePaymentRequests([newReq, ...requests])
+  return newReq
+}
+
+export function getPaymentSettings(): PaymentSettings {
+  const stored = localStorage.getItem(STORAGE_KEYS.PAYMENT_SETTINGS)
+  return stored ? JSON.parse(stored) : {
+    kakaoPayQrImage: '',
+    kakaoPayLink: '',
+    bankName: '',
+    accountNumber: '',
+    accountHolder: '',
+  }
+}
+
+export function savePaymentSettings(settings: PaymentSettings): void {
+  localStorage.setItem(STORAGE_KEYS.PAYMENT_SETTINGS, JSON.stringify(settings))
 }

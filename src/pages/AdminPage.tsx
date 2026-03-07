@@ -2,15 +2,20 @@ import { useState, useRef, useCallback } from 'react'
 import {
   Lock, Plus, Trash2, Upload, FileText, Users, AlertCircle, X,
   Download, Eye, Image, CheckCircle, Clock, Loader, ChevronDown,
-  ChevronUp, RotateCcw, FlaskConical, MessageSquare, Pin, PinOff
+  ChevronUp, RotateCcw, FlaskConical, MessageSquare, Pin, PinOff,
+  CreditCard, Settings
 } from 'lucide-react'
-import type { Question, RegisteredUser, StudyMaterial, StudyPost } from '../types'
+import type { Question, RegisteredUser, StudyMaterial, StudyPost, PaymentRequest, PaymentSettings } from '../types'
 import type { PageType } from '../types'
-import { getQuestions, saveQuestions, getUsers, getStudyMaterials, saveStudyMaterials, getStudyPosts, saveStudyPosts } from '../data'
+import {
+  getQuestions, saveQuestions, getUsers, getStudyMaterials, saveStudyMaterials,
+  getStudyPosts, saveStudyPosts, getPaymentRequests, savePaymentRequests,
+  getPaymentSettings, savePaymentSettings
+} from '../data'
 
 const ADMIN_PASSWORD = 'fifaadmin2024'
 
-type AdminTab = 'questions' | 'text-input' | 'image-upload' | 'materials' | 'users' | 'community'
+type AdminTab = 'questions' | 'text-input' | 'image-upload' | 'materials' | 'community' | 'payments' | 'users' | 'settings'
 
 /* ────────────────────────────────────────
    OCR 파싱 유틸리티
@@ -316,8 +321,10 @@ export default function AdminPage({ onAdminLogin, onAdminLogout, onNavigate }: A
     { id: 'text-input'  as AdminTab, label: '텍스트로 등록',   icon: <Plus size={15} /> },
     { id: 'image-upload'as AdminTab, label: '사진으로 등록',   icon: <Image size={15} /> },
     { id: 'materials'   as AdminTab, label: '학습자료',         icon: <Upload size={15} /> },
-    { id: 'community'   as AdminTab, label: '커뮤니티 관리',   icon: <MessageSquare size={15} /> },
+    { id: 'community'   as AdminTab, label: '커뮤니티',         icon: <MessageSquare size={15} /> },
+    { id: 'payments'    as AdminTab, label: '결제 관리',        icon: <CreditCard size={15} /> },
     { id: 'users'       as AdminTab, label: '회원 관리',        icon: <Users size={15} /> },
+    { id: 'settings'    as AdminTab, label: '설정',             icon: <Settings size={15} /> },
   ]
 
   return (
@@ -365,7 +372,9 @@ export default function AdminPage({ onAdminLogin, onAdminLogout, onNavigate }: A
         {tab === 'image-upload' && <ImageUploadTab />}
         {tab === 'materials'    && <MaterialsTab />}
         {tab === 'community'    && <CommunityTab />}
+        {tab === 'payments'     && <PaymentsTab />}
         {tab === 'users'        && <UsersTab />}
+        {tab === 'settings'     && <SettingsTab />}
       </div>
     </div>
   )
@@ -2265,6 +2274,150 @@ function CommunityTab() {
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+const STATUS_LABEL: Record<PaymentRequest['status'], string> = {
+  pending: '대기 중', approved: '승인 완료', rejected: '거절',
+}
+const STATUS_COLOR: Record<PaymentRequest['status'], string> = {
+  pending: 'bg-amber-100 text-amber-700',
+  approved: 'bg-green-100 text-green-700',
+  rejected: 'bg-red-100 text-red-700',
+}
+const PLAN_LABEL_MAP: Record<string, string> = { standard: '스탠다드', premium: '프리미엄' }
+
+function PaymentsTab() {
+  const [requests, setRequests] = useState<PaymentRequest[]>(() => getPaymentRequests())
+  const [filterStatus, setFilterStatus] = useState<'all' | PaymentRequest['status']>('all')
+
+  const save = (updated: PaymentRequest[]) => { setRequests(updated); savePaymentRequests(updated) }
+  const handleApprove = (req: PaymentRequest) => {
+    save(requests.map((r) => r.id === req.id ? { ...r, status: 'approved' as const } : r))
+    const users = getUsers()
+    const user = users.find((u) => u.phone === req.phone || u.id === req.userId)
+    if (user) localStorage.setItem('fifa_users', JSON.stringify(users.map((u) => u.id === user.id ? { ...u, hasPaidExam: true } : u)))
+  }
+  const handleReject = (id: string) => save(requests.map((r) => r.id === id ? { ...r, status: 'rejected' as const } : r))
+  const handleDelete = (id: string) => { if (!confirm('삭제할까요?')) return; save(requests.filter((r) => r.id !== id)) }
+  const filtered = filterStatus === 'all' ? requests : requests.filter((r) => r.status === filterStatus)
+  const pendingCount = requests.filter((r) => r.status === 'pending').length
+
+  return (
+    <div className="p-6">
+      <div className="mb-6">
+        <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+          결제 관리
+          {pendingCount > 0 && <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">{pendingCount}</span>}
+        </h2>
+        <p className="text-sm text-gray-500 mt-0.5">입금 확인 후 승인하면 해당 회원에게 모의고사 권한이 부여됩니다</p>
+      </div>
+      <div className="flex gap-2 mb-5 flex-wrap">
+        {([['all','전체'], ['pending','대기 중'], ['approved','승인 완료'], ['rejected','거절']] as [string, string][]).map(([v, l]) => (
+          <button key={v} onClick={() => setFilterStatus(v as 'all' | PaymentRequest['status'])}
+            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${filterStatus === v ? 'bg-blue-600 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
+            {l}{v === 'pending' && pendingCount > 0 ? ` (${pendingCount})` : ''}
+          </button>
+        ))}
+      </div>
+      <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+        {filtered.length === 0 && <div className="py-16 text-center text-gray-400 text-sm">결제 신청 내역이 없습니다.</div>}
+        {filtered.map((req, i) => (
+          <div key={req.id} className={`p-5 ${i < filtered.length - 1 ? 'border-b border-gray-100' : ''}`}>
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-2 flex-wrap">
+                  <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${STATUS_COLOR[req.status]}`}>{STATUS_LABEL[req.status]}</span>
+                  <span className="text-xs bg-blue-100 text-blue-700 px-2.5 py-1 rounded-full font-medium">{PLAN_LABEL_MAP[req.plan]}</span>
+                  <span className="text-sm font-bold text-gray-900">{req.amount.toLocaleString()}원</span>
+                </div>
+                <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-sm">
+                  <div><span className="text-gray-400">입금자명</span><span className="font-semibold ml-2">{req.depositorName}</span></div>
+                  <div><span className="text-gray-400">연락처</span><span className="font-semibold ml-2">{req.phone}</span></div>
+                  <div className="col-span-2 text-xs text-gray-400 mt-1">{new Date(req.createdAt).toLocaleString('ko-KR')}</div>
+                </div>
+              </div>
+              <div className="flex flex-col gap-2 flex-shrink-0">
+                {req.status === 'pending' && (
+                  <>
+                    <button onClick={() => handleApprove(req)} className="flex items-center gap-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm font-semibold transition-colors">
+                      <CheckCircle size={14} /> 승인
+                    </button>
+                    <button onClick={() => handleReject(req.id)} className="flex items-center gap-1 px-4 py-2 border border-red-200 text-red-600 hover:bg-red-50 rounded-xl text-sm font-semibold transition-colors">
+                      <X size={14} /> 거절
+                    </button>
+                  </>
+                )}
+                <button onClick={() => handleDelete(req.id)} className="p-2 rounded-xl border border-gray-200 text-gray-400 hover:bg-gray-50 hover:text-gray-600 transition-colors self-end">
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function SettingsTab() {
+  const [settings, setSettings] = useState<PaymentSettings>(() => getPaymentSettings())
+  const [saved, setSaved] = useState(false)
+  const qrInputRef = useRef<HTMLInputElement>(null)
+
+  const handleSave = () => { savePaymentSettings(settings); setSaved(true); setTimeout(() => setSaved(false), 2000) }
+  const handleQrUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = (ev) => setSettings((p) => ({ ...p, kakaoPayQrImage: ev.target?.result as string }))
+    reader.readAsDataURL(file)
+  }
+
+  return (
+    <div className="p-6 max-w-xl">
+      <h2 className="text-lg font-bold text-gray-900 mb-1">결제 정보 설정</h2>
+      <p className="text-sm text-gray-500 mb-6">결제 페이지에 표시될 카카오페이 QR과 계좌 정보를 입력하세요.</p>
+      <div className="bg-white rounded-2xl p-6 shadow-sm space-y-5">
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">카카오페이 QR 이미지</label>
+          {settings.kakaoPayQrImage && (
+            <div className="mb-2 flex items-center gap-3">
+              <img src={settings.kakaoPayQrImage} alt="QR" className="w-32 h-32 object-contain rounded-xl border border-gray-200" />
+              <button onClick={() => setSettings((p) => ({ ...p, kakaoPayQrImage: '' }))} className="text-xs text-red-500 hover:underline">삭제</button>
+            </div>
+          )}
+          <button onClick={() => qrInputRef.current?.click()} className="px-4 py-2 border border-gray-200 rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition-colors">
+            QR 이미지 업로드
+          </button>
+          <input ref={qrInputRef} type="file" accept="image/*" onChange={handleQrUpload} className="hidden" />
+        </div>
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-1.5">카카오페이 송금 링크</label>
+          <input value={settings.kakaoPayLink} onChange={(e) => setSettings((p) => ({ ...p, kakaoPayLink: e.target.value }))}
+            placeholder="https://qr.kakaopay.com/..."
+            className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          <p className="text-xs text-gray-400 mt-1">카카오페이 앱 → 송금 → 내 QR → 링크 복사</p>
+        </div>
+        <div className="border-t border-gray-100 pt-5">
+          <p className="text-sm font-semibold text-gray-700 mb-3">계좌이체 정보</p>
+          <div className="space-y-3">
+            {([['bankName','은행명','예: 카카오뱅크'], ['accountNumber','계좌번호','예: 3333-12-1234567'], ['accountHolder','예금주','예: 홍길동']] as [keyof PaymentSettings, string, string][]).map(([key, label, placeholder]) => (
+              <div key={key}>
+                <label className="block text-xs text-gray-500 mb-1">{label}</label>
+                <input value={settings[key] as string} onChange={(e) => setSettings((p) => ({ ...p, [key]: e.target.value }))}
+                  placeholder={placeholder}
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
+            ))}
+          </div>
+        </div>
+        <button onClick={handleSave}
+          className={`w-full py-3 rounded-xl font-semibold text-sm transition-colors ${saved ? 'bg-green-500 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}>
+          {saved ? '✓ 저장 완료!' : '저장하기'}
+        </button>
+      </div>
     </div>
   )
 }
