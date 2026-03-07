@@ -414,7 +414,7 @@ function TextInputTab() {
   const updatePreview = (
     idx: number,
     field: keyof ParsedQuestion,
-    value: string | number,
+    value: string | number | number[],
     optIdx?: number
   ) => {
     setPreviews((prev) =>
@@ -439,7 +439,8 @@ function TextInputTab() {
     let added = 0, dup = 0, incomplete = 0
 
     for (const p of previews) {
-      if (!p.text?.trim() || p.options?.some((o) => !o.trim()) || (p.correctAnswer ?? -1) < 0) {
+      const hasAnswer = (p.multipleCorrect && p.multipleCorrect.length > 0) || ((p.correctAnswer ?? -1) >= 0)
+      if (!p.text?.trim() || p.options?.some((o) => !o.trim()) || !hasAnswer) {
         incomplete++; continue
       }
       const norm = p.text.trim().toLowerCase()
@@ -564,10 +565,22 @@ function TextPreviewCard({
 }: {
   idx: number
   parsed: Partial<ParsedQuestion>
-  onUpdate: (field: keyof ParsedQuestion, value: string | number, optIdx?: number) => void
+  onUpdate: (field: keyof ParsedQuestion, value: string | number | number[], optIdx?: number) => void
   onRemove: () => void
 }) {
-  const noCorrect  = (parsed.correctAnswer ?? -1) < 0
+  const correctList: number[] = parsed.multipleCorrect && parsed.multipleCorrect.length > 0
+    ? parsed.multipleCorrect
+    : parsed.correctAnswer !== undefined && (parsed.correctAnswer as number) >= 0
+      ? [parsed.correctAnswer as number]
+      : []
+  const noCorrect = correctList.length === 0
+
+  const toggleAnswer = (i: number) => {
+    const next = correctList.includes(i) ? correctList.filter((x) => x !== i) : [...correctList, i].sort((a, b) => a - b)
+    onUpdate('multipleCorrect', next)
+    onUpdate('correctAnswer', next.length > 0 ? next[0] : -1)
+  }
+
   const incomplete = !parsed.text?.trim() || parsed.options?.some((o) => !o.trim()) || noCorrect
 
   return (
@@ -605,9 +618,10 @@ function TextPreviewCard({
               {['A','B','C','D'].map((ch, i) => (
                 <button
                   key={ch}
-                  onClick={() => onUpdate('correctAnswer', i)}
+                  type="button"
+                  onClick={() => toggleAnswer(i)}
                   className={`flex-1 py-2 rounded-xl text-sm font-bold border-2 transition-colors ${
-                    parsed.correctAnswer === i
+                    correctList.includes(i)
                       ? 'border-green-500 bg-green-500 text-white'
                       : 'border-gray-200 text-gray-500 hover:border-gray-300'
                   }`}
@@ -632,15 +646,15 @@ function TextPreviewCard({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {(['A','B','C','D'] as const).map((ch, i) => (
             <div key={ch}>
-              <label className={`block text-xs font-semibold mb-1.5 ${parsed.correctAnswer === i ? 'text-green-600' : 'text-gray-500'}`}>
-                보기 {ch} {parsed.correctAnswer === i && '✓ 정답'}
+              <label className={`block text-xs font-semibold mb-1.5 ${correctList.includes(i) ? 'text-green-600' : 'text-gray-500'}`}>
+                보기 {ch} {correctList.includes(i) && '✓ 정답'}
               </label>
               <input
                 value={parsed.options?.[i] ?? ''}
                 onChange={(e) => onUpdate('options', e.target.value, i)}
                 placeholder={`보기 ${ch}`}
                 className={`w-full border-2 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  parsed.correctAnswer === i ? 'border-green-300 bg-green-50' : 'border-gray-200'
+                  correctList.includes(i) ? 'border-green-300 bg-green-50' : 'border-gray-200'
                 }`}
               />
             </div>
