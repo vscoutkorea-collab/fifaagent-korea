@@ -454,6 +454,7 @@ function TextInputTab() {
         correctAnswer: p.multipleCorrect && p.multipleCorrect.length > 1 ? p.multipleCorrect : p.correctAnswer!,
         category: p.category || '기타',
         explanation: p.explanation || '',
+        createdAt: new Date().toISOString(),
       })
       added++
     }
@@ -1189,6 +1190,7 @@ function ImageUploadTab() {
         correctAnswer: p.multipleCorrect && p.multipleCorrect.length > 1 ? p.multipleCorrect : p.correctAnswer!,
         category: p.category || '기타',
         explanation: p.explanation || '',
+        createdAt: new Date().toISOString(),
       })
       added++
     }
@@ -1793,7 +1795,7 @@ function QuestionsTab() {
           dups.push(item.text.slice(0, 30) + '...')
           continue
         }
-        newQs.push({ id: `q_${Date.now()}_${Math.random()}`, ...item })
+        newQs.push({ id: `q_${Date.now()}_${Math.random()}`, ...item, createdAt: new Date().toISOString() })
       }
       if (dups.length) setBulkError(`중복 ${dups.length}개 제외: ${dups.join(' / ')}`)
       setBulkPreview(newQs)
