@@ -153,16 +153,22 @@ function ExamRunner({ questions, onComplete, onNavigate }: {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const answersRef = useRef(answers)
   answersRef.current = answers
+  const questionsRef = useRef(questions)
+  questionsRef.current = questions
+  const onCompleteRef = useRef(onComplete)
+  onCompleteRef.current = onComplete
 
   const handleSubmit = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current)
     const timeSpent = Math.floor((Date.now() - startTimeRef.current) / 1000)
-    const score = answersRef.current.reduce((acc, ans, i) => {
-      const q = questions[i]
-      return q && isCorrect(q, ans) ? acc + 1 : acc
+    const qs = questionsRef.current
+    const ans = answersRef.current
+    const score = ans.reduce((acc, a, i) => {
+      const q = qs[i]
+      return q && isCorrect(q, a) ? acc + 1 : acc
     }, 0)
-    onComplete({ answers: answersRef.current, questions, score, passed: score >= 15, completedAt: new Date().toISOString(), timeSpent })
-  }, [questions, onComplete])
+    onCompleteRef.current({ answers: ans, questions: qs, score, passed: score >= 15, completedAt: new Date().toISOString(), timeSpent })
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     timerRef.current = setInterval(() => {
