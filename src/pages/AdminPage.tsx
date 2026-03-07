@@ -8,7 +8,7 @@ import {
 import type { Question, RegisteredUser, StudyMaterial, StudyPost, PaymentRequest, PaymentSettings } from '../types'
 import type { PageType } from '../types'
 import {
-  getQuestions, saveQuestions, getUsers, getStudyMaterials, saveStudyMaterials,
+  getQuestions, saveQuestions, getUsers, saveUsers, getStudyMaterials, saveStudyMaterials,
   getStudyPosts, saveStudyPosts, getPaymentRequests, savePaymentRequests,
   getPaymentSettings, savePaymentSettings
 } from '../data'
@@ -2013,8 +2013,19 @@ function MaterialsTab() {
    회원 관리 탭
 ───────────────────────────────────────── */
 function UsersTab() {
-  const users: RegisteredUser[] = getUsers()
+  const [users, setUsers] = useState<RegisteredUser[]>(() => getUsers())
   const paid = users.filter((u) => u.hasPaidExam).length
+
+  const toggleAccess = (userId: string, grant: boolean) => {
+    const updated = users.map((u) => {
+      if (u.id !== userId) return u
+      if (grant) return { ...u, hasPaidExam: true, paidPlan: (u as any).paidPlan ?? 'standard', paidAt: (u as any).paidAt ?? new Date().toISOString() }
+      return { ...u, hasPaidExam: false }
+    })
+    setUsers(updated)
+    saveUsers(updated)
+  }
+
   return (
     <div>
       <div className="grid grid-cols-3 gap-4 mb-5">
@@ -2033,20 +2044,35 @@ function UsersTab() {
         {users.length === 0 && <div className="text-center py-12 text-gray-400">등록된 회원이 없습니다.</div>}
         <div className="divide-y divide-gray-50">
           {users.map((user) => (
-            <div key={user.id} className="flex items-center justify-between px-6 py-4">
-              <div>
+            <div key={user.id} className="flex items-center justify-between px-6 py-4 gap-4">
+              <div className="flex-1 min-w-0">
                 <p className="font-semibold text-gray-900">{user.lastName}{user.firstName}</p>
                 <p className="text-sm text-gray-500">{user.email} · {user.phone} · {user.age}세</p>
                 <p className="text-xs text-gray-400 mt-0.5">가입일: {new Date(user.createdAt).toLocaleDateString('ko-KR')}</p>
               </div>
-              <div className="text-right">
+              <div className="flex flex-col items-end gap-2 flex-shrink-0">
                 <span className={`text-xs px-3 py-1 rounded-full font-medium ${
                   user.hasPaidExam ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
                 }`}>
                   {user.hasPaidExam ? (user as any).paidPlan === 'premium' ? '프리미엄' : '스탠다드' : '무료 회원'}
                 </span>
                 {user.hasPaidExam && (user as any).paidAt && (
-                  <p className="text-xs text-gray-400 mt-1">시작일: {new Date((user as any).paidAt).toLocaleDateString('ko-KR')}</p>
+                  <p className="text-xs text-gray-400">시작일: {new Date((user as any).paidAt).toLocaleDateString('ko-KR')}</p>
+                )}
+                {user.hasPaidExam ? (
+                  <button
+                    onClick={() => { if (confirm(`${user.lastName}${user.firstName}님의 모의고사 권한을 해제할까요?`)) toggleAccess(user.id, false) }}
+                    className="text-xs px-3 py-1.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 transition-colors font-medium"
+                  >
+                    권한 해제
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => toggleAccess(user.id, true)}
+                    className="text-xs px-3 py-1.5 rounded-lg border border-blue-200 text-blue-600 hover:bg-blue-50 transition-colors font-medium"
+                  >
+                    권한 부여
+                  </button>
                 )}
               </div>
             </div>
