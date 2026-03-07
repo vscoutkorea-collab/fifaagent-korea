@@ -444,7 +444,7 @@ function TextInputTab() {
         incomplete++; continue
       }
       const norm = p.text.trim().toLowerCase()
-      if (existing.some((q) => q.text.trim().toLowerCase() === norm) ||
+      if (isDupQuestion(p.text!, p.options as string[], [...existing, ...toAdd]) ||
           toAdd.some((q) => q.text.trim().toLowerCase() === norm)) {
         dup++; continue
       }
@@ -973,6 +973,23 @@ function splitIntoQuestions(raw: string): string[] {
 }
 
 /* ────────────────────────────────────────
+   중복 감지 공통 헬퍼 (텍스트 100자 OR 보기 일치)
+───────────────────────────────────────── */
+function isDupQuestion(
+  text: string,
+  options: string[],
+  pool: { text: string; options: string[] }[]
+): boolean {
+  const normText = text.trim().toLowerCase().slice(0, 100)
+  const normOpts = options.map((o) => o.trim().toLowerCase()).sort().join('||')
+  return pool.some((q) => {
+    const byText = q.text.trim().toLowerCase().slice(0, 100) === normText
+    const byOpts = q.options.map((o) => o.trim().toLowerCase()).sort().join('||') === normOpts
+    return byText || byOpts
+  })
+}
+
+/* ────────────────────────────────────────
    사진 OCR 등록 탭
 ───────────────────────────────────────── */
 function ImageUploadTab() {
@@ -1095,7 +1112,7 @@ function ImageUploadTab() {
       if (parsedList.length === 1) {
         const parsed      = parsedList[0]
         const isDuplicate = !!parsed.text?.trim() &&
-          existing.some((q) => q.text.trim().toLowerCase() === parsed.text!.trim().toLowerCase())
+          isDupQuestion(parsed.text!, parsed.options ?? [], existing)
         setItems((prev) =>
           prev.map((i) =>
             i.id === item.id
@@ -1106,7 +1123,7 @@ function ImageUploadTab() {
       } else {
         const newItems: OcrItem[] = parsedList.map((parsed, idx) => {
           const isDuplicate = !!parsed.text?.trim() &&
-            existing.some((q) => q.text.trim().toLowerCase() === parsed.text!.trim().toLowerCase())
+            isDupQuestion(parsed.text!, parsed.options ?? [], existing)
           return {
             id: `ocr_${Date.now()}_${idx}_${Math.random().toString(36).slice(2)}`,
             file: item.file,
@@ -1170,7 +1187,7 @@ function ImageUploadTab() {
         }
         const existing    = getQuestions()
         const isDuplicate = !!parsed.text?.trim() &&
-          existing.some((q) => q.text.trim().toLowerCase() === (parsed.text as string).trim().toLowerCase())
+          isDupQuestion(parsed.text!, parsed.options ?? [], existing)
         return { ...item, parsed, isDuplicate }
       })
     )
@@ -1193,7 +1210,7 @@ function ImageUploadTab() {
 
       const norm = p.text.trim().toLowerCase()
       const isDup =
-        existing.some((q) => q.text.trim().toLowerCase() === norm) ||
+        isDupQuestion(p.text!, p.options ?? [], [...existing, ...newQs]) ||
         newQs.some((q) => q.text.trim().toLowerCase() === norm)
       if (isDup) { dup++; continue }
 
