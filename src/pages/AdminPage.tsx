@@ -1680,7 +1680,7 @@ function QuestionsTab() {
   const [bulkText, setBulkText] = useState('')
   const [bulkError, setBulkError] = useState('')
   const [bulkPreview, setBulkPreview] = useState<Question[]>([])
-  const [form, setForm] = useState({ text: '', options: ['', '', '', ''], correctAnswer: 0, category: '', explanation: '' })
+  const [form, setForm] = useState({ text: '', options: ['', '', '', ''], correctAnswers: [] as number[], category: '', explanation: '' })
   const [formError, setFormError] = useState('')
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [searchText, setSearchText] = useState('')
@@ -1698,22 +1698,28 @@ function QuestionsTab() {
       setFormError('모든 필드를 입력해 주세요.')
       return
     }
+    if (form.correctAnswers.length === 0) {
+      setFormError('정답을 하나 이상 선택해 주세요.')
+      return
+    }
     if (questions.some((q) => q.text.trim().toLowerCase() === form.text.trim().toLowerCase())) {
       setFormError('동일한 문제가 이미 존재합니다.')
       return
     }
+    const correctAnswer: number | number[] =
+      form.correctAnswers.length === 1 ? form.correctAnswers[0] : [...form.correctAnswers].sort((a, b) => a - b)
     const newQ: Question = {
       id: `q_${Date.now()}`,
       text: form.text.trim(),
       options: form.options.map((o) => o.trim()) as [string, string, string, string],
-      correctAnswer: form.correctAnswer,
+      correctAnswer,
       category: form.category.trim(),
       explanation: form.explanation.trim(),
     }
     const updated = [...questions, newQ]
     setQuestions(updated)
     saveQuestions(updated)
-    setForm({ text: '', options: ['', '', '', ''], correctAnswer: 0, category: '', explanation: '' })
+    setForm({ text: '', options: ['', '', '', ''], correctAnswers: [], category: '', explanation: '' })
     setShowAddForm(false)
   }
 
@@ -1851,22 +1857,32 @@ function QuestionsTab() {
                 <textarea value={form.text} onChange={(e) => setForm({ ...form, text: e.target.value })}
                   rows={3} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
               </div>
-              {form.options.map((opt, i) => (
-                <div key={i}>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    보기 {String.fromCharCode(65 + i)}{i === form.correctAnswer && <span className="text-green-600 ml-1">(정답)</span>}
-                  </label>
-                  <div className="flex gap-2">
-                    <input value={opt} onChange={(e) => {
-                      const u = [...form.options]; u[i] = e.target.value; setForm({ ...form, options: u })
-                    }} className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                    <button onClick={() => setForm({ ...form, correctAnswer: i })}
-                      className={`px-3 rounded-xl text-sm font-medium ${i === form.correctAnswer ? 'bg-green-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
-                      정답
-                    </button>
+              {form.options.map((opt, i) => {
+                const isSelected = form.correctAnswers.includes(i)
+                const label = String.fromCharCode(65 + i)
+                return (
+                  <div key={i}>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      보기 {label}
+                      {isSelected && <span className="text-green-600 ml-1 font-semibold">✓ 정답</span>}
+                    </label>
+                    <div className="flex gap-2">
+                      <input value={opt} onChange={(e) => {
+                        const u = [...form.options]; u[i] = e.target.value; setForm({ ...form, options: u })
+                      }} className={`flex-1 border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${isSelected ? 'border-green-300 bg-green-50' : 'border-gray-200'}`} />
+                      <button
+                        onClick={() => {
+                          const cur = form.correctAnswers
+                          const next = cur.includes(i) ? cur.filter((x) => x !== i) : [...cur, i]
+                          setForm({ ...form, correctAnswers: next })
+                        }}
+                        className={`px-3 rounded-xl text-sm font-medium transition-colors ${isSelected ? 'bg-green-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+                        정답
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                )
+              })}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">해설</label>
                 <textarea value={form.explanation} onChange={(e) => setForm({ ...form, explanation: e.target.value })}
