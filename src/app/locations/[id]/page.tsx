@@ -51,20 +51,17 @@ export default function LocationPage({ params }: { params: { id: string } }) {
       <div className="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
           <div>
-            <div className="bg-slate-100 rounded-2xl h-80 flex items-center justify-center mb-6">
-              <div className="text-center">
-                <div className="text-6xl mb-3">📍</div>
-                <p className="text-slate-500">지도 영역 (Google / 네이버 지도 삽입)</p>
-                <a
-                  href={loc.mapUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 mt-2 text-green-600 text-sm hover:underline"
-                >
-                  네이버 지도로 보기
-                  <ExternalLink className="w-3.5 h-3.5" />
-                </a>
-              </div>
+            <div className="rounded-2xl overflow-hidden h-80 mb-6 border border-slate-200">
+              <iframe
+                src={`https://maps.google.com/maps?q=${encodeURIComponent(loc.address)}&output=embed&z=16&hl=ko`}
+                width="100%"
+                height="100%"
+                style={{ border: 0 }}
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                title={`풋볼아이 ${loc.name} 지도`}
+              />
             </div>
 
             <div className="space-y-4 bg-white border border-slate-100 rounded-2xl p-6">
