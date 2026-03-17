@@ -53,7 +53,7 @@ export default function LocationPage({ params }: { params: { id: string } }) {
           <div>
             <div className="rounded-2xl overflow-hidden h-80 mb-6 border border-slate-200">
               <iframe
-                src={`https://map.naver.com/p/entry/place/${loc.naverMapEmbedId}?embed=true`}
+                src={`https://map.naver.com/v5/embed?type=place&placeId=${loc.naverMapEmbedId}`}
                 width="100%"
                 height="100%"
                 style={{ border: 0 }}
