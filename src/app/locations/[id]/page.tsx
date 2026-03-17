@@ -53,13 +53,12 @@ export default function LocationPage({ params }: { params: { id: string } }) {
           <div>
             <div className="rounded-2xl overflow-hidden h-80 mb-6 border border-slate-200">
               <iframe
-                src={`https://maps.google.com/maps?q=${encodeURIComponent(loc.address)}&output=embed&z=16&hl=ko`}
+                src={`https://map.naver.com/p/entry/place/${loc.naverMapEmbedId}?embed=true`}
                 width="100%"
                 height="100%"
                 style={{ border: 0 }}
                 allowFullScreen
                 loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
                 title={`풋볼아이 ${loc.name} 지도`}
               />
             </div>
