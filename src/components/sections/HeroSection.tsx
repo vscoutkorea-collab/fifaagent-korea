@@ -27,7 +27,7 @@ export default function HeroSection() {
           </h1>
 
           <p className="text-lg sm:text-xl text-slate-300 mb-8 leading-relaxed">
-            체계적인 프로그램으로 아이의 축구 실력과 인성을 함께 키워드립니다.<br className="hidden sm:block" />
+            보여주기식 훈련이 아닌, 성장에 집중한 체계적인 프로그램을 제공합니다.<br className="hidden sm:block" />
             취미반 · 엘리트반 · 선수반 — 아이에게 맞는 반을 찾아보세요.
           </p>
 

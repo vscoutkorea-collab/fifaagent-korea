@@ -4,7 +4,7 @@ const features = [
   {
     icon: Trophy,
     title: '체계적인 프로그램',
-    description: '취미반부터 선수반까지, 아이의 수준과 목표에 맞는 체계적인 커리큘럼으로 실력을 키워드립니다.',
+    description: '취미반부터 선수반까지, 아이의 수준과 목표에 맞는 체계적인 커리큘럼으로 실력을 교육합니다.',
     color: 'bg-yellow-50 text-yellow-600',
   },
   {
@@ -16,7 +16,7 @@ const features = [
   {
     icon: Users,
     title: '전문 코칭 스태프',
-    description: 'KFA 라이선스 보유 코치진이 각 아이에게 맞는 지도로 실력과 자신감을 키워드립니다.',
+    description: 'KFA 라이선스 보유 코치진이 각 아이에게 맞는 지도로 실력과 자신감을 교육합니다.',
     color: 'bg-green-50 text-green-600',
   },
   {
