@@ -1,6 +1,11 @@
+import Image from 'next/image'
 import { MapPin, Phone, Clock, ExternalLink, MessageCircle } from 'lucide-react'
 import { LOCATIONS, SITE } from '@/lib/constants'
 import type { Metadata } from 'next'
+
+const MAP_IMAGES: Record<string, string> = {
+  eungye: '/maps/eungye-map.png',
+}
 
 export function generateStaticParams() {
   return LOCATIONS.map((loc) => ({ id: loc.id }))
@@ -51,7 +56,15 @@ export default function LocationPage({ params }: { params: { id: string } }) {
       <div className="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
           <div>
-            <div className="rounded-2xl overflow-hidden h-80 mb-6 border border-slate-200">
+            <div className="rounded-2xl overflow-hidden h-80 mb-6 border border-slate-200 relative">
+              {MAP_IMAGES[loc.id] ? (
+                <Image
+                  src={MAP_IMAGES[loc.id]}
+                  alt={`풋볼아이 ${loc.name} 지도`}
+                  fill
+                  className="object-cover"
+                />
+              ) : (
               <iframe
                 src={`https://maps.google.com/maps?q=${encodeURIComponent('풋볼아이 ' + loc.name + ' ' + loc.address)}&output=embed&z=17&hl=ko`}
                 width="100%"
@@ -61,6 +74,7 @@ export default function LocationPage({ params }: { params: { id: string } }) {
                 loading="lazy"
                 title={`풋볼아이 ${loc.name} 지도`}
               />
+              )}
             </div>
 
             <div className="space-y-4 bg-white border border-slate-100 rounded-2xl p-6">
