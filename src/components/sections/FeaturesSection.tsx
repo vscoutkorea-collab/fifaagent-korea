@@ -4,7 +4,7 @@ const features = [
   {
     icon: Trophy,
     title: '체계적인 프로그램',
-    description: '취미반부터 선수반까지, 아이의 수준과 목표에 맞는 체계적인 커리큘럼으로 실력을 교육합니다.',
+    description: '취미반부터 선수반까지, 아이의 수준과 목표에 맞춘 체계적인 커리큘럼으로 확실한 성장을 만들어갑니다.',
     color: 'bg-yellow-50 text-yellow-600',
   },
   {
@@ -16,13 +16,13 @@ const features = [
   {
     icon: Users,
     title: '전문 코칭 스태프',
-    description: 'KFA 라이선스 보유 코치진이 각 아이에게 맞는 지도로 실력과 자신감을 교육합니다.',
+    description: 'KFA 라이선스 코치진이 아이의 수준에 맞춘 지도와 함께 실력과 자신감을 함께 키워갑니다.',
     color: 'bg-green-50 text-green-600',
   },
   {
     icon: Globe,
     title: '국내·해외 연계',
-    description: '국내 리그 및 대회 참가부터 스페인 유소년 클럽 연계 프로그램까지 운영합니다.',
+    description: '국내 대회 경험부터 중등 진학, 스페인 진출까지 아이의 축구 성장 과정을 단계별로 만들어갑니다.',
     color: 'bg-purple-50 text-purple-600',
   },
 ]
