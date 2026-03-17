@@ -5,6 +5,7 @@ import type { Metadata } from 'next'
 
 const MAP_IMAGES: Record<string, string> = {
   eungye: '/maps/eungye-map.png',
+  baegod: '/maps/baegod-map.jpg',
 }
 
 export function generateStaticParams() {
