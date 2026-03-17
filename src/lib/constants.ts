@@ -2,32 +2,32 @@ export const SITE = {
   name: '풋볼아이',
   fullName: '풋볼아이 축구교실',
   slogan: '시작은 놀이로, 완성은 교육으로',
-  description: '체계적인 프로그램으로 아이의 축구 실력과 인성을 함께 키워드립니다',
-  kakaoChannel: 'https://pf.kakao.com/_footballeye',
-  naverTalk: 'https://talk.naver.com/footballeye',
-  instagram: 'https://instagram.com/footballeye',
-  youtube: 'https://youtube.com/@footballeye',
+  description: '보여주기식 훈련이 아닌, 성장에 집중한 체계적인 프로그램을 제공합니다',
+  kakaoChannel: 'http://pf.kakao.com/_xiEYyd/chat',
+  naverTalk: 'http://talk.naver.com/WC67WW',
+  instagram: 'https://www.instagram.com/footballeye_official/',
+  youtube: 'https://www.youtube.com/@%ED%92%8B%EB%B3%BC%EC%95%84%EC%9D%B4',
 }
 
 export const LOCATIONS = [
   {
     id: 'eungye',
     name: '은계점',
-    address: '경기도 시흥시 은계로 000',
-    phone: '031-000-0000',
-    naverBookingUrl: 'https://booking.naver.com/booking/13/bizes/footballeye-eungye',
-    mapUrl: 'https://map.naver.com/v5/entry/place/footballeye-eungye',
-    kakaoMapUrl: 'https://map.kakao.com/?q=풋볼아이+은계점',
+    address: '경기도 시흥시 은계번영길27, 시티파크 603,604,605호',
+    phone: '031-312-9206',
+    naverBookingUrl: 'https://naver.me/GahYCH6B',
+    mapUrl: 'https://naver.me/xLNZDnhB',
+    kakaoMapUrl: 'https://kko.to/bc0aXWqDXr',
     hours: '월~토 10:00 ~ 21:00',
   },
   {
     id: 'baegod',
     name: '배곧점',
-    address: '경기도 시흥시 배곧1로 000',
-    phone: '031-000-0001',
-    naverBookingUrl: 'https://booking.naver.com/booking/13/bizes/footballeye-baegod',
-    mapUrl: 'https://map.naver.com/v5/entry/place/footballeye-baegod',
-    kakaoMapUrl: 'https://map.kakao.com/?q=풋볼아이+배곧점',
+    address: '경기도 시흥시 배곧4로 18 304호, 305호',
+    phone: '031-312-9206',
+    naverBookingUrl: 'https://naver.me/xAfi4XpN',
+    mapUrl: 'https://naver.me/Fet9GiV2',
+    kakaoMapUrl: 'https://kko.to/ynl7DbgQee',
     hours: '월~토 10:00 ~ 21:00',
   },
 ]
@@ -36,7 +36,7 @@ export const PROGRAMS = [
   {
     id: 'hobby',
     name: '취미반',
-    target: '7세 ~ 초등 6학년',
+    target: '6~7세 유치부, 초등부, 중등부',
     description: '축구를 처음 접하는 아이들도 즐겁게 배울 수 있는 프로그램',
     features: ['기초 기술 습득', '팀워크·협동심 향상', '신체 발달 프로그램', '재미있는 게임식 훈련'],
     color: 'blue',
@@ -84,11 +84,11 @@ export const COACHES = [
 export const FAQS = [
   {
     q: '몇 살부터 등록할 수 있나요?',
-    a: '만 6세(7세)부터 등록 가능합니다. 취미반은 초등 6학년까지, 엘리트반은 중학생까지 참여할 수 있어요.',
+    a: '만 5세(6세)부터 등록 가능합니다. 취미반은 초등 6학년까지, 중학생까지 참여할 수 있어요.',
   },
   {
     q: '축구를 전혀 못해도 괜찮나요?',
-    a: '물론입니다! 취미반은 처음 시작하는 아이들을 위한 반이에요. 기초부터 차근차근 가르쳐드립니다.',
+    a: '물론입니다! 취미반은 처음 시작하는 아이들을 위한 반이에요. 기초부터 차근차근 교육합니다.',
   },
   {
     q: '취미반과 엘리트반의 차이는 무엇인가요?',
@@ -104,7 +104,7 @@ export const FAQS = [
   },
   {
     q: '무료 체험 수업이 있나요?',
-    a: '네, 첫 방문 시 무료 체험 수업을 진행합니다. 네이버 예약 또는 카카오 채널로 신청해 주세요.',
+    a: '네, 첫 방문 시 무료 체험 수업을 진행합니다. 전화 문의 또는 네이버 예약 또는 카카오 채널로 신청해 주세요.',
   },
   {
     q: '학기 중에도 등록할 수 있나요?',
