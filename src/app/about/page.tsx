@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import { CheckCircle2, Award, Globe, Heart } from 'lucide-react'
 import { COACHES } from '@/lib/constants'
 import type { Metadata } from 'next'
@@ -30,7 +31,7 @@ export default function AboutPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mb-20">
           <div>
             <h2 className="text-3xl font-bold text-slate-900 mb-6">우리의 이야기</h2>
-            <div className="space-y-4 text-slate-600 leading-relaxed">
+            <div className="space-y-4 text-slate-600 leading-relaxed text-base">
               <p>
                 풋볼아이는 "모든 아이들이 축구를 통해 성장할 수 있다"는 믿음으로 시작되었습니다.
                 단순히 기술을 가르치는 것이 아니라, 팀워크·규칙 준수·끈기를 통해 아이의 인성과 자신감을 함께 키웁니다.
@@ -45,10 +46,21 @@ export default function AboutPage() {
               </p>
             </div>
           </div>
-          <div className="bg-gradient-to-br from-green-100 to-green-50 rounded-2xl h-80 flex items-center justify-center">
-            <div className="text-center">
-              <div className="text-6xl mb-3">⚽</div>
-              <p className="text-green-700 font-semibold">풋볼아이 훈련 현장</p>
+          <div className="relative rounded-2xl overflow-hidden h-80 bg-gradient-to-br from-green-100 to-green-50">
+            {/* 사진 파일을 /public/about-main.jpg 에 넣으면 자동 표시됩니다 */}
+            <Image
+              src="/about-main.jpg"
+              alt="풋볼아이 훈련 현장"
+              fill
+              className="object-cover"
+              onError={() => {}}
+            />
+            <div className="absolute inset-0 flex items-center justify-center bg-green-50/80">
+              <div className="text-center">
+                <div className="text-6xl mb-3">⚽</div>
+                <p className="text-green-700 font-semibold">풋볼아이 훈련 현장</p>
+                <p className="text-green-500 text-xs mt-1">/public/about-main.jpg 로 교체</p>
+              </div>
             </div>
           </div>
         </div>
@@ -59,12 +71,12 @@ export default function AboutPage() {
             {values.map((v) => {
               const Icon = v.icon
               return (
-                <div key={v.title} className="text-center p-6 bg-slate-50 rounded-2xl">
-                  <div className="w-14 h-14 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <div key={v.title} className="text-center p-6 bg-slate-50 rounded-2xl flex flex-col items-center">
+                  <div className="w-14 h-14 bg-green-100 rounded-2xl flex items-center justify-center mb-4">
                     <Icon className="w-7 h-7 text-green-600" />
                   </div>
                   <h3 className="font-bold text-slate-900 mb-2">{v.title}</h3>
-                  <p className="text-sm text-slate-500 leading-relaxed">{v.desc}</p>
+                  <p className="text-sm text-slate-500 leading-relaxed break-keep">{v.desc}</p>
                 </div>
               )
             })}
@@ -76,8 +88,15 @@ export default function AboutPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {COACHES.map((coach) => (
               <div key={coach.id} className="bg-white border border-slate-200 rounded-2xl p-6 flex gap-5">
-                <div className="w-20 h-20 bg-slate-100 rounded-2xl flex items-center justify-center flex-shrink-0 text-3xl">
-                  👤
+                <div className="relative w-20 h-20 rounded-2xl overflow-hidden bg-slate-100 flex-shrink-0">
+                  <Image
+                    src={coach.image}
+                    alt={coach.name}
+                    fill
+                    className="object-cover"
+                    onError={() => {}}
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center text-3xl">👤</div>
                 </div>
                 <div>
                   <h3 className="text-lg font-bold text-slate-900">{coach.name}</h3>
@@ -90,7 +109,7 @@ export default function AboutPage() {
                       </li>
                     ))}
                   </ul>
-                  <p className="text-sm text-slate-600 italic leading-relaxed">"{coach.message}"</p>
+                  <p className="text-sm text-slate-600 italic leading-relaxed break-keep">"{coach.message}"</p>
                 </div>
               </div>
             ))}
