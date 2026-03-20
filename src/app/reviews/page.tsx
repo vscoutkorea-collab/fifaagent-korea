@@ -78,7 +78,6 @@ export default function ReviewsPage() {
                   <p className="font-semibold text-slate-900">{review.name}</p>
                   <div className="flex flex-wrap gap-1.5 mt-1">
                     <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">{review.program}</span>
-                    <span className="text-xs bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">{review.location}</span>
                   </div>
                 </div>
               </div>
