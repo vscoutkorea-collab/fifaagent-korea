@@ -6,7 +6,9 @@ export default function CTASection() {
   return (
     <section className="py-20 bg-gradient-to-br from-green-600 to-green-800">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <div className="text-5xl mb-6">⚽</div>
+        <div className="mb-6">
+          <img src="/emblem.png" alt="풋볼아이 앰블럼" className="w-20 h-20 object-contain mx-auto" />
+        </div>
         <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
           지금 무료 체험 수업을 신청하세요
         </h2>
