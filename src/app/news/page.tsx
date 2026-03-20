@@ -1,5 +1,6 @@
 import { Calendar, ChevronRight } from 'lucide-react'
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 
 export const metadata: Metadata = {
@@ -40,7 +41,7 @@ export default async function NewsPage() {
         ) : (
           <div className="divide-y divide-slate-100">
             {posts.map((post) => (
-              <div key={post.id} className="py-6 flex items-start gap-4 group -mx-4 px-4 rounded-xl hover:bg-slate-50 transition-colors">
+              <Link key={post.id} href={`/news/${post.id}`} className="py-6 flex items-start gap-4 group -mx-4 px-4 rounded-xl hover:bg-slate-50 transition-colors block">
                 <div className="flex-1">
                   <div className="flex flex-wrap items-center gap-2 mb-2">
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${categoryColors[post.category] || 'bg-slate-100 text-slate-600'}`}>
@@ -57,7 +58,7 @@ export default async function NewsPage() {
                   </div>
                 </div>
                 <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-green-500 transition-colors mt-1 flex-shrink-0" />
-              </div>
+              </Link>
             ))}
           </div>
         )}
