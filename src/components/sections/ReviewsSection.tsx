@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Star, Quote } from 'lucide-react'
+import { Quote } from 'lucide-react'
 import { reviews } from '@/lib/reviews'
 
 export default function ReviewsSection() {
@@ -21,11 +21,6 @@ export default function ReviewsSection() {
                   <p className="font-semibold text-slate-900">{review.name}</p>
                   <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">{review.program}</span>
                 </div>
-              </div>
-              <div className="flex gap-0.5 mb-3">
-                {[...Array(review.rating)].map((_, i) => (
-                  <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                ))}
               </div>
               <p className="text-slate-700 text-sm leading-relaxed">{review.text}</p>
             </div>
