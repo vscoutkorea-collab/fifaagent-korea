@@ -7,7 +7,6 @@ import { usePathname } from 'next/navigation'
 import { Menu, X, ChevronDown } from 'lucide-react'
 
 const navItems = [
-  { label: '풋볼아이', href: '/about' },
   {
     label: '프로그램',
     href: '/programs',
