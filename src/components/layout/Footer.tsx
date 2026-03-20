@@ -10,7 +10,6 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           <div className="lg:col-span-1">
             <div className="flex items-center gap-2 mb-4">
-              <Image src="/emblem.png" alt="풋볼아이 엠블럼" width={40} height={40} className="object-contain" />
               <Image src="/logo.png" alt="풋볼아이" width={110} height={30} className="object-contain brightness-0 invert" />
             </div>
             <p className="text-sm text-slate-400 mb-4 leading-relaxed">{SITE.slogan}</p>
