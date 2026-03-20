@@ -163,7 +163,7 @@ export default function LocationPage({ params }: { params: { id: string } }) {
             <div className="bg-slate-50 rounded-2xl p-6">
               <h3 className="font-bold text-slate-900 mb-3">시설 안내</h3>
               <ul className="space-y-2 text-sm text-slate-600">
-                {['전용 훈련 그라운드', '탈의실 및 샤워 시설', '대기실 (학부모용)', '안전 펜스 설치', '주차 공간 완비'].map((item) => (
+                {['전용 훈련 그라운드', '대기실 (학부모용)', '안전 펜스 설치', '주차 공간 완비'].map((item) => (
                   <li key={item} className="flex items-center gap-2">
                     <span className="w-1.5 h-1.5 rounded-full bg-green-500 flex-shrink-0" />
                     {item}
