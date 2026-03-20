@@ -124,7 +124,7 @@ export default function AdminNewsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 pt-6 pb-20">
+    <div className="min-h-screen bg-slate-50 pt-24 pb-20">
       <div className="max-w-4xl mx-auto px-4">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-2xl font-bold text-slate-900">공지사항 관리</h1>
