@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 
 const details = [
   { icon: Users, label: '대상', value: '유치부 만 5세(6세) ~ 초등부, 중등부' },
-  { icon: Clock, label: '수업 시간', value: '은계점 주1회~주3회 60분 / 배곧점 주1회~주3회 70분' },
+  { icon: Clock, label: '수업 시간', value: '은계점 주1회~주3회 60분\n배곧점 주1회~주3회 70분' },
   { icon: Calendar, label: '모집', value: '연중 수시 모집' },
 ]
 
@@ -47,7 +47,7 @@ export default function HobbyPage() {
                 </div>
                 <div>
                   <p className="text-sm text-slate-500">{d.label}</p>
-                  <p className="font-bold text-slate-900">{d.value}</p>
+                  <p className="font-bold text-slate-900 whitespace-pre-line">{d.value}</p>
                 </div>
               </div>
             )
