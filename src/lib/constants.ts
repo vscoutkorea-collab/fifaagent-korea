@@ -44,7 +44,7 @@ export const LOCATIONS = [
     mapUrl: '',
     naverMapEmbedId: '',
     kakaoMapUrl: '',
-    hours: '월~토 (훈련 일정에 따라 운영)',
+    hours: '월~금 (훈련 일정에 따라 운영)',
   },
 ]
 

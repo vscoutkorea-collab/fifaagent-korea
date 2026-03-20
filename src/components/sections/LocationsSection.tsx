@@ -45,14 +45,14 @@ export default function LocationsSection() {
                       className="flex items-center justify-center gap-2 w-full py-2.5 bg-orange-500 text-white font-semibold rounded-xl text-sm hover:bg-orange-600 transition-colors"
                     >
                       <Phone className="w-4 h-4" />
-                      초등부 상담전화
+                      전화상담 (초등부)
                     </a>
                     <a
                       href="tel:010-2669-6967"
                       className="flex items-center justify-center gap-2 w-full py-2.5 bg-orange-100 text-orange-700 font-semibold rounded-xl text-sm hover:bg-orange-200 transition-colors"
                     >
                       <Phone className="w-4 h-4" />
-                      중등부 상담전화
+                      전화상담 (중등부)
                     </a>
                   </div>
                 ) : (
