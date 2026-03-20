@@ -15,7 +15,7 @@ export default function LocationsSection() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-14">
           <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-4">지점 안내</h2>
-          <p className="text-lg text-slate-600">시흥 두 곳과 선수반 전용시설에서 만나보세요</p>
+          <p className="text-lg text-slate-600">시흥 은계점, 배곧점과 선수반 전용시설에서 만나보세요</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {LOCATIONS.map((loc) => (
