@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { Phone, MessageCircle, MapPin, Clock, Instagram, Youtube } from 'lucide-react'
 import { SITE, LOCATIONS } from '@/lib/constants'
 
@@ -9,10 +10,8 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           <div className="lg:col-span-1">
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
-                <span className="text-white font-bold text-sm">FE</span>
-              </div>
-              <span className="font-bold text-xl text-white">{SITE.name}</span>
+              <Image src="/emblem.png" alt="풋볼아이 엠블럼" width={40} height={40} className="object-contain" />
+              <Image src="/logo.png" alt="풋볼아이" width={110} height={30} className="object-contain brightness-0 invert" />
             </div>
             <p className="text-sm text-slate-400 mb-4 leading-relaxed">{SITE.slogan}</p>
             <div className="flex items-center gap-3">

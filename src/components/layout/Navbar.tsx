@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { Menu, X, ChevronDown } from 'lucide-react'
-import { SITE } from '@/lib/constants'
 
 const navItems = [
   { label: '풋볼아이', href: '/about' },
@@ -57,10 +57,8 @@ export default function Navbar() {
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
-              <span className="text-white font-bold text-sm">FE</span>
-            </div>
-            <span className="font-bold text-xl text-slate-900">{SITE.name}</span>
+            <Image src="/emblem.png" alt="풋볼아이 엠블럼" width={36} height={36} className="object-contain" />
+            <Image src="/logo.png" alt="풋볼아이" width={100} height={28} className="object-contain" />
           </Link>
 
           <div className="hidden lg:flex items-center gap-1">
