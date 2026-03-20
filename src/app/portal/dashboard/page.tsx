@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { CalendarCheck, LineChart, Calendar, Bell, LogOut } from 'lucide-react'
 
 export default async function PortalDashboard() {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/portal')
 
