@@ -61,13 +61,10 @@ export default function Footer() {
                       <Clock className="w-3 h-3 flex-shrink-0" />
                       <span>{loc.hours}</span>
                     </div>
-                    {loc.id === 'pro' ? (
+                    {(loc.id === 'pro-elementary' || loc.id === 'pro-middle') ? (
                       <div className="flex flex-col gap-1 pt-1">
-                        <a href="tel:010-9159-3339" className="flex items-center gap-1.5 px-2 py-1 bg-slate-800 rounded-md hover:bg-orange-600 transition-colors">
-                          <Phone className="w-3 h-3 flex-shrink-0" />전화상담 (초등부)
-                        </a>
-                        <a href="tel:010-2669-6967" className="flex items-center gap-1.5 px-2 py-1 bg-slate-800 rounded-md hover:bg-orange-600 transition-colors">
-                          <Phone className="w-3 h-3 flex-shrink-0" />전화상담 (중등부)
+                        <a href={`tel:${loc.consultPhone}`} className="flex items-center gap-1.5 px-2 py-1 bg-slate-800 rounded-md hover:bg-orange-600 transition-colors">
+                          <Phone className="w-3 h-3 flex-shrink-0" />전화상담
                         </a>
                       </div>
                     ) : (

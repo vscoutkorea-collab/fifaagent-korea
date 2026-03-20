@@ -69,23 +69,25 @@ export default function ContactPage() {
           <h2 className="text-xl font-bold text-slate-900 mb-6">지점별 전화 문의</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {LOCATIONS.map((loc) => (
-              <a
-                key={loc.id}
-                href={`tel:${loc.phone}`}
-                className="flex items-center gap-4 p-5 bg-white border border-slate-200 rounded-2xl hover:border-green-300 hover:bg-green-50/30 transition-colors group"
-              >
+              <div key={loc.id} className="flex items-center gap-4 p-5 bg-white border border-slate-200 rounded-2xl">
                 <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center flex-shrink-0">
                   <Phone className="w-5 h-5 text-green-600" />
                 </div>
-                <div>
-                  <p className="font-semibold text-slate-900">{loc.name}</p>
-                  <p className="text-green-600 font-mono text-lg">{loc.phone}</p>
-                  <div className="flex items-center gap-1 text-xs text-slate-400 mt-1">
+                <div className="flex-1">
+                  <p className="font-semibold text-slate-900 mb-2">{loc.name}</p>
+                  <a
+                    href={`tel:${loc.consultPhone}`}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white text-sm font-semibold rounded-xl hover:bg-green-700 transition-colors"
+                  >
+                    <Phone className="w-4 h-4" />
+                    전화 상담
+                  </a>
+                  <div className="flex items-center gap-1 text-xs text-slate-400 mt-2">
                     <MapPin className="w-3 h-3" />
                     {loc.address}
                   </div>
                 </div>
-              </a>
+              </div>
             ))}
           </div>
         </div>

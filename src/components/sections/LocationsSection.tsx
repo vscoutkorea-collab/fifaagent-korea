@@ -41,21 +41,14 @@ export default function LocationsSection() {
                   </div>
                 </div>
 
-                {loc.id === 'pro' ? (
+                {(loc.id === 'pro-elementary' || loc.id === 'pro-middle') ? (
                   <div className="space-y-2">
                     <a
-                      href="tel:010-9159-3339"
+                      href={`tel:${loc.consultPhone}`}
                       className="flex items-center justify-center gap-2 w-full py-2.5 bg-orange-500 text-white font-semibold rounded-xl text-sm hover:bg-orange-600 transition-colors"
                     >
                       <Phone className="w-4 h-4" />
-                      전화상담 (초등부)
-                    </a>
-                    <a
-                      href="tel:010-2669-6967"
-                      className="flex items-center justify-center gap-2 w-full py-2.5 bg-orange-100 text-orange-700 font-semibold rounded-xl text-sm hover:bg-orange-200 transition-colors"
-                    >
-                      <Phone className="w-4 h-4" />
-                      전화상담 (중등부)
+                      전화상담
                     </a>
                   </div>
                 ) : (
