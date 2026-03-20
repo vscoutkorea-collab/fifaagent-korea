@@ -39,9 +39,9 @@ export default async function NewsPage() {
             <p className="text-lg">등록된 공지사항이 없습니다.</p>
           </div>
         ) : (
-          <div className="divide-y divide-slate-100">
+          <div className="space-y-3">
             {posts.map((post) => (
-              <Link key={post.id} href={`/news/${post.id}`} className="py-6 flex items-start gap-4 group -mx-4 px-4 rounded-xl hover:bg-slate-50 transition-colors block">
+              <Link key={post.id} href={`/news/${post.id}`} className="flex items-start gap-4 group px-5 py-5 rounded-xl border border-slate-200 hover:border-green-300 hover:bg-slate-50 transition-colors block">
                 <div className="flex-1">
                   <div className="flex flex-wrap items-center gap-2 mb-2">
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${categoryColors[post.category] || 'bg-slate-100 text-slate-600'}`}>
