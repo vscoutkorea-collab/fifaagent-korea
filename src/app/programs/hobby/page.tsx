@@ -10,8 +10,8 @@ export const metadata: Metadata = {
 }
 
 const details = [
-  { icon: Users, label: '대상', value: '만 6세(7세) ~ 초등 6학년' },
-  { icon: Clock, label: '수업 시간', value: '주 2~3회, 1시간 30분' },
+  { icon: Users, label: '대상', value: '유치부 만 5세(6세) ~ 초등부, 중등부' },
+  { icon: Clock, label: '수업 시간', value: '은계점 주1회~주3회 60분 / 배곧점 주1회~주3회 70분' },
   { icon: Calendar, label: '모집', value: '연중 수시 모집' },
 ]
 
