@@ -11,8 +11,8 @@ export const metadata: Metadata = {
 
 const details = [
   { icon: Users, label: '대상', value: '초등 3학년 ~ 중학교' },
-  { icon: Clock, label: '수업 시간', value: '주 3~4회, 2시간' },
-  { icon: Trophy, label: '대회 참가', value: '지역 리그 & 전국 대회' },
+  { icon: Clock, label: '수업 시간', value: '주 2~3회, 90분' },
+  { icon: Trophy, label: '대회 참가', value: '지역 리그 & 지역 대회' },
   { icon: Calendar, label: '모집', value: '연중 수시 모집' },
 ]
 
@@ -26,7 +26,7 @@ export default function ElitePage() {
           </div>
           <h1 className="text-4xl sm:text-5xl font-bold mb-4">한 단계 위의 축구</h1>
           <p className="text-xl text-green-200 max-w-2xl">
-            체계적인 전술 훈련과 실전 대회로 진짜 실력을 키웁니다.
+            체계적인 기본기 훈련과 실전 대회로 진짜 실력을 키웁니다.
           </p>
         </div>
       </div>
