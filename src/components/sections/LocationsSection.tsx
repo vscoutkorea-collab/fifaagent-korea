@@ -1,6 +1,13 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { MapPin, Phone, Clock } from 'lucide-react'
 import { LOCATIONS } from '@/lib/constants'
+
+const LOCATION_IMAGES: Record<string, string> = {
+  baegod: '/images/baegod-location.jpeg',
+  eungye: '/images/eungye-location.jpeg',
+  pro: '/images/pro-location.jpeg',
+}
 
 export default function LocationsSection() {
   return (
@@ -13,17 +20,13 @@ export default function LocationsSection() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {LOCATIONS.map((loc) => (
             <div key={loc.id} className="bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-sm hover:shadow-lg transition-shadow">
-              <div className={`h-36 flex items-center justify-center ${
-                loc.id === 'pro'
-                  ? 'bg-gradient-to-br from-orange-100 to-orange-50'
-                  : 'bg-gradient-to-br from-green-100 to-green-50'
-              }`}>
-                <div className="text-center">
-                  <div className="text-4xl mb-1">{loc.id === 'pro' ? '⭐' : '🏟️'}</div>
-                  <p className={`font-semibold text-sm ${loc.id === 'pro' ? 'text-orange-700' : 'text-green-700'}`}>
-                    {loc.name}
-                  </p>
-                </div>
+              <div className="h-48 relative overflow-hidden">
+                <Image
+                  src={LOCATION_IMAGES[loc.id]}
+                  alt={loc.name}
+                  fill
+                  className="object-cover"
+                />
               </div>
               <div className="p-5">
                 <h3 className="text-lg font-bold text-slate-900 mb-3">{loc.name}</h3>
