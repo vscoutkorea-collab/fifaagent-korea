@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { MapPin, Phone, Clock, ArrowRight } from 'lucide-react'
+import { MapPin, Phone, Clock } from 'lucide-react'
 import { LOCATIONS } from '@/lib/constants'
 
 export default function LocationsSection() {
@@ -65,21 +65,13 @@ export default function LocationsSection() {
                       상담전화
                     </a>
                     {loc.naverBookingUrl && (
-                      <a
-                        href={loc.naverBookingUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                      <Link
+                        href={`/locations/${loc.id}`}
                         className="flex items-center justify-center gap-1.5 flex-1 py-2.5 bg-slate-100 text-slate-700 font-semibold rounded-xl text-sm hover:bg-slate-200 transition-colors"
                       >
-                        네이버 예약
-                      </a>
+                        체험 수업 예약
+                      </Link>
                     )}
-                    <Link
-                      href={`/locations/${loc.id}`}
-                      className="flex items-center gap-1 px-3 py-2.5 border border-slate-200 text-slate-600 rounded-xl text-sm hover:bg-slate-50 transition-colors"
-                    >
-                      <ArrowRight className="w-4 h-4" />
-                    </Link>
                   </div>
                 )}
               </div>
